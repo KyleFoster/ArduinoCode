@@ -198,7 +198,7 @@ bool sendMessage()
   //else send the message
   else
   {
-    printf("Length of message: %d\n\r", num_of_chars);
+    //printf("Length of message: %d\n\r", num_of_chars);
       
     // send length of incoming message to receiver
     bool ok = radio.write( &num_of_chars, sizeof(int));
@@ -253,11 +253,11 @@ bool receiveMessage()
   {
     // Receive the number of characters in the message being sent back
     bool ok = radio.read( &num_of_chars_received, sizeof(int));
-    printf("Length of incoming message: %d\n\r", num_of_chars_received);
+    //printf("Length of incoming message: %d\n\r", num_of_chars_received);
 
     if (ok)
     {
-      printf("Waiting for message...\n\r");
+      //printf("Waiting for message...\n\r");
       // wait until message us ready to be received 
       while (radio.available() == false) { }
     
@@ -266,7 +266,8 @@ bool receiveMessage()
       ok = radio.read( &received_message, sizeof(received_message));
       if (ok)
       {
-        printf("Got response: %s\n\r", received_message);
+        String m = String(received_message);
+        Serial.print("Got message: " + m.substring(0,num_of_chars_received) + "\n\r");
         message_received = true;
       }
       else
