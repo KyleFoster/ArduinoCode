@@ -227,31 +227,18 @@ void receiveMessage()
 
   // if they dont want to switch roles, receive a message
   if (!switch_role)
-  {
-    bool length_read = false;
-    bool message_read = false;
-    
+  { 
     // Receive the number of characters in the message being sent back
-    length_read = radio.read( &num_of_chars_received, sizeof(int));
+    radio.read( &num_of_chars_received, sizeof(int));
 
-    if (length_read)
-    {
-      // wait until message us ready to be received 
-      while (radio.available() == false) { }
+    // wait until message us ready to be received 
+    while (radio.available() == false) { }
     
-      // Receive the message and print
-      char received_message[num_of_chars_received];
-      message_read = radio.read( &received_message, sizeof(received_message));
-      if (message_read)
-      {
-        String m = String(received_message);
-        Serial.print("Got message: " + m.substring(0,num_of_chars_received) + "\n\r");
-      }
-      else
-        printf("Failed to receive mesaage...\n\r");
-    }
-    else
-      printf("Failed to receive message length...\n\r");
+    // Receive the message and print
+    char received_message[num_of_chars_received];
+    radio.read( &received_message, sizeof(received_message));
+    String m = String(received_message);
+    Serial.print("Got message: " + m.substring(0,num_of_chars_received) + "\n\r");
   }
 }
   
