@@ -118,57 +118,40 @@ void loop(void)
 
   if (role == role_ping_out)
   {
-    // First, stop listening so you can send message
+    // Stop listening so you can send message
     radio.stopListening();
-
-    // send and receive messages
-    bool message_sent = sendMessage();
-    /*if (message_sent)
-    {
-      // Switch from sending to receiving
-      radio.startListening();
-      delay(100);
-      bool message_received = receiveMessage();
-    }*/
+    sendMessage();
   }
        
   // Pong back role.  Receive each packet, dump it out, and send it back --- RECEIVE 
 
   if ( role == role_pong_back )
   {
-    // First, stop listening so you can send message
+    // Start listening so you can receive a message
     radio.startListening();
-
-    // receive and send messages
-    bool received_message = receiveMessage();
-    /*if (received_message)
-    {
-      radio.stopListening();
-      delay(100);
-      bool message_sent = sendMessage();
-    }*/
+    receiveMessage();
   }
 }
 
 
 void switchRole(String c)
 {
-  //if ( c.equalsIgnoreCase("transmit1") && role == role_pong_back )
   if (c == "t" && role == role_pong_back)
   {
     printf("*** CHANGING TO TRANSMIT ROLE -- ENTER 'receive1' TO SWITCH BACK\n\r");
 
     // Become the primary transmitter (ping out)
+    radio.stopListening();
     role = role_ping_out;
     radio.openWritingPipe(pipes[0]);
     radio.openReadingPipe(1,pipes[1]);
   }
-  //else if ( c.equalsIgnoreCase("receive1") && role == role_ping_out )
   else if (c == "r"  && role == role_ping_out)
   {
     printf("*** CHANGING TO RECEIVE ROLE -- ENTER 'transmit1' TO SWITCH BACK\n\r");
       
     // Become the primary receiver (pong back)
+    radio.startListening();
     role = role_pong_back;
     radio.openWritingPipe(pipes[1]);
     radio.openReadingPipe(1,pipes[0]);
@@ -176,9 +159,9 @@ void switchRole(String c)
 }
 
 
-bool sendMessage()
+void sendMessage()
 {
-  bool message_sent = false;
+  int num_of_chars = 0;
   char message_buffer[100];
 
   printf("Enter a message to transmit...\n\r");
@@ -187,42 +170,36 @@ bool sendMessage()
   while (Serial.available() == 0) { }
   
   //read in message from serial, press enter to send
-  int num_of_chars = Serial.readBytesUntil('\n',message_buffer,100);
+  num_of_chars = Serial.readBytesUntil('\n',message_buffer,100);
 
   //Switch roles if user inputs receive1
   String message_string = String(message_buffer);
   if (message_string.substring(0,8) == "receive1" || message_string.substring(0,9) == "transmit1")
-  {
     switchRole(message_string.substring(0,1));
-  }
-  //else send the message
-  else
+  else //else send the message
   {
-    //printf("Length of message: %d\n\r", num_of_chars);
+    bool length_sent = false;
+    bool message_sent = false;
       
     // send length of incoming message to receiver
-    bool ok = radio.write( &num_of_chars, sizeof(int));
+    length_sent = radio.write( &num_of_chars, sizeof(int));
 
     // if length sent, send the text message
-    if (ok)
+    if (length_sent)
     {
-      bool ok1 = radio.write( &message_buffer, num_of_chars);
-      if (ok1)
-      {
+      message_sent = radio.write( &message_buffer, num_of_chars);
+      if (message_sent)
         printf("Message sent...\n\r");
-        message_sent = true;
-      }
       else
-        printf("Failed to send message\n\r");
+        printf("Failed to send message...\n\r");
     }
     else
-      printf("Failed to send length\n\r");
+      printf("Failed to send length...\n\r");
   }  
-  return message_sent;
 }
 
 
-bool receiveMessage()
+void receiveMessage()
 {
   bool message_received = false;
   bool switch_role = false; 
@@ -251,24 +228,24 @@ bool receiveMessage()
   // if they dont want to switch roles, receive a message
   if (!switch_role)
   {
+    bool length_read = false;
+    bool message_read = false;
+    
     // Receive the number of characters in the message being sent back
-    bool ok = radio.read( &num_of_chars_received, sizeof(int));
-    //printf("Length of incoming message: %d\n\r", num_of_chars_received);
+    length_read = radio.read( &num_of_chars_received, sizeof(int));
 
-    if (ok)
+    if (length_read)
     {
-      //printf("Waiting for message...\n\r");
       // wait until message us ready to be received 
       while (radio.available() == false) { }
     
       // Receive the message and print
       char received_message[num_of_chars_received];
-      ok = radio.read( &received_message, sizeof(received_message));
-      if (ok)
+      message_read = radio.read( &received_message, sizeof(received_message));
+      if (message_read)
       {
         String m = String(received_message);
         Serial.print("Got message: " + m.substring(0,num_of_chars_received) + "\n\r");
-        message_received = true;
       }
       else
         printf("Failed to receive mesaage...\n\r");
@@ -276,7 +253,6 @@ bool receiveMessage()
     else
       printf("Failed to receive message length...\n\r");
   }
-  return message_received;
 }
   
 
