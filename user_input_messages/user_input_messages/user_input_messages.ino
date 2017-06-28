@@ -141,20 +141,20 @@ void switchRole(String c)
     printf("*** CHANGING TO TRANSMIT ROLE -- ENTER 'receive1' TO SWITCH BACK\n\r");
 
     // Become the primary transmitter (ping out)
+    radio.stopListening();
     role = role_ping_out;
     radio.openWritingPipe(pipes[0]);
     radio.openReadingPipe(1,pipes[1]);
-    radio.stopListening();
   }
   else if (c == "r"  && role == role_ping_out)
   {
     printf("*** CHANGING TO RECEIVE ROLE -- ENTER 'transmit1' TO SWITCH BACK\n\r");
       
     // Become the primary receiver (pong back)
+    radio.startListening();
     role = role_pong_back;
     radio.openWritingPipe(pipes[1]);
     radio.openReadingPipe(1,pipes[0]);
-    radio.startListening();
   } 
 }
 
@@ -187,7 +187,7 @@ void sendMessage()
     // if length sent, send the text message
     //if (length_sent)
     //{
-    radio.write( &message_buffer, num_of_chars);
+    radio.write( &message_buffer, sizeof(message_buffer));
     //if (message_sent)
     //  printf("Message sent...\n\r");
     //else
