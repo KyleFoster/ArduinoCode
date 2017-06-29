@@ -1,19 +1,9 @@
-/*
- Copyright (C) 2011 J. Coliz <maniacbug@ymail.com>
-
- This program is free software; you can redistribute it and/or
- modify it under the terms of the GNU General Public License
- version 2 as published by the Free Software Foundation.
- */
-
 /**
- * Example for Getting Started with nRF24L01+ radios. 
+ * User Input with automatic switching between transmitting and receiving nRF24L01+ radios. 
  *
- * This is an example of how to use the RF24 class.  Write this sketch to two 
- * different nodes.  Put one of the nodes into 'transmit' mode by connecting 
- * with the serial monitor and sending a 'T'.  The ping node sends the current 
- * time to the pong node, which responds by sending the value back.  The ping 
- * node can then see how long the whole cycle took.
+ * User begins in receiver mode. To send a message, enter a message into the serial monitor. 
+ * The mode is switched to transmit mode, and the message is sent out. The mode is then 
+ * automatically put back into receiver mode. 
  */
 
 #include <SPI.h>
@@ -126,6 +116,7 @@ void loop(void)
 void sendMessage()
 {
   int num_of_chars = 0;
+  memset(send_payload, 0, 100);
 
   //read in message from serial, press enter to send
   num_of_chars = Serial.readBytesUntil('\n',send_payload,100);
@@ -146,9 +137,9 @@ void sendMessage()
 
 void receiveMessage()
 { 
-  int num_of_chars_received = 0;
   char switch_code[100];
   bool transmit = false;
+  int len = 0; 
 
   printf("Waiting for incoming transmissions...\n\r");
 
@@ -171,7 +162,8 @@ void receiveMessage()
   if (!transmit)
   { 
     // wait until message us ready to be received 
-    int len = radio.getDynamicPayloadSize();
+    memset(received_payload, 0, 32);
+    len = radio.getDynamicPayloadSize();
     
     // Receive the message
     radio.read( &received_payload, len);
