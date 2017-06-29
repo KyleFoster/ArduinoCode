@@ -53,6 +53,9 @@ const char* role_friendly_name[] = { "invalid", "Ping out", "Pong back"};
 // The role of the current running sketch
 role_e role = role_pong_back;
 
+char send_payload[100] = "";
+char received_payload[100] = "";
+
 void setup(void)
 {
   //
@@ -72,6 +75,7 @@ void setup(void)
   radio.begin();
 
   // optionally, increase the delay between retries & # of retries
+  radio.enableDynamicPayloads();
   radio.setRetries(15,15);
 
   // optionally, reduce the payload size.  seems to
@@ -155,7 +159,7 @@ void switchRole(String c)
 void sendMessage()
 {
   int num_of_chars = 0;
-  char message_buffer[100];
+  //char message_buffer[100];
 
   printf("Enter a message to transmit...\n\r");
   
@@ -163,19 +167,19 @@ void sendMessage()
   while (!Serial.available()) { }
   
   //read in message from serial, press enter to send
-  num_of_chars = Serial.readBytesUntil('\n',message_buffer,100);
+  num_of_chars = Serial.readBytesUntil('\n',send_payload,100);
 
   //Switch roles if user inputs receive1
-  String message_string = String(message_buffer);
+  String message_string = String(send_payload);
   if (message_string.substring(0,8) == "receive1" || message_string.substring(0,9) == "transmit1")
     switchRole(message_string.substring(0,1));
   else //else send the message
   {
     // send length of incoming message to receiver
-    radio.write( &num_of_chars, sizeof(int));
+    //radio.write( &num_of_chars, sizeof(int));
 
     // if length sent, send the text message
-    radio.write( &message_buffer, sizeof(message_buffer));
+    radio.write( &send_payload, sizeof(send_payload));
   }
 }
 
@@ -210,18 +214,19 @@ void receiveMessage()
   if (!switch_role)
   { 
     // Receive the number of characters in the message being sent back
-    radio.read( &num_of_chars_received, sizeof(int));
+    //radio.read( &num_of_chars_received, sizeof(int));
 
     // wait until message us ready to be received 
-    while (!radio.available()) { }
+    //while (!radio.available()) { }
+    int len = radio.getDynamicPayloadSize();
     
     // Receive the message
-    char received_message[num_of_chars_received];
-    radio.read( &received_message, sizeof(received_message));
+    //char received_message[num_of_chars_received];
+    radio.read( &received_payload, len);
 
     //convert to String and print
-    String m = String(received_message);
-    Serial.print("Got message: " + m.substring(0,num_of_chars_received) + "\n\r");
+    String m = String(received_payload);
+    Serial.print("Got message: " + m.substring(0,len) + "\n\r");
   }
 }
   
