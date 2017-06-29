@@ -29,7 +29,6 @@ RF24Mesh mesh(radio, network);
  *
  **/
 #define nodeID 2
-#define otherNodeID 1
 
 //#################################
 
@@ -40,6 +39,51 @@ char tmpStr[sizeof(dataStr) + 1];
 uint8_t strCtr = 1;
 
 uint32_t delayTime = 120;
+
+
+//Declare and Initialize Variables
+unsigned int sizeCtr = 2;
+uint32_t errorCount = 0;
+uint32_t duplicates = 0;
+uint32_t totalData = 0;
+int nodeNum=0;
+int16_t nodeAddress=0;
+int16_t AddressBook[6];
+int i=0; 
+int bufferval=0; 
+int bufferreturn;
+
+int setAddresses(){
+ // printf("----------------------------------\n");
+
+ //Declare and initialize Variables
+ int sendNode=0; 
+ bool done=false;
+
+  //Check for address of each node, print nodes that are available
+  printf("The following other nodes are connected to the network: ");
+  for (nodeNum=1; nodeNum<7; nodeNum++){
+    nodeAddress=mesh.getAddress(nodeNum);
+    bufferval=nodeNum-1;
+    if(nodeAddress>0){
+      //printf("RF24 Address: 0%o\n", nodeAddress);
+      AddressBook[bufferval]=nodeAddress;
+      printf(" %i, ", nodeNum);
+    }
+    else 
+      AddressBook[bufferval]=0;
+  }
+  printf("\n");
+
+  printf("Please enter the node you want to send data to: ");
+
+  while(Serial.available()==0){
+    //wait for user
+  }
+  sendNode=Serial.parseInt();
+  
+  return sendNode;
+}
 
 void setup() {
   Serial.begin(115200);
@@ -52,52 +96,29 @@ void setup() {
   // Connect to the mesh
   Serial.println(F("Connecting to the mesh..."));
   mesh.begin();
+  //network.begin();
 }
-
-//Declare and Initialize Variables
-unsigned int sizeCtr = 2;
-uint32_t errorCount = 0;
-uint32_t duplicates = 0;
-uint32_t totalData = 0;
-int nodeNum=0;
-int16_t nodeAddress=0;
-int16_t AddressBook[6];
-int i=0; 
-int bufferval=0; 
 
 void loop() {
-  mesh.update();
-  checkAddresses();
+  //Declare and initialize local variables
+  int sendNode=0;
+  
+  mesh.update(); //update the network
 
-  //Print available nodeIDs to the user
-  printf("The following nodes are connected to the network: ");
-  for(i=0; i<6; i++){
-    printf("0%o", AddressBook[i]);
-    /*
-    if(AddressBook[i]!=0){
-      bufferval=i+1;
-      printf("%i , ", bufferval);
-    }
-    */
-  }
+  //Call setAddresses
+  sendNode=setAddresses();
+  printf("%i\n", sendNode);
+
+  uint16_t recipient_address = AddressBook[sendNode-1];
+  uint32_t time;
+  bool ok=false;
+  RF24NetworkHeader header(recipient_address,'T');
+  ok=network.write(header,&time,sizeof(time)); 
+  if (ok)
+    printf("yay");
+  else
+    printf("boo");
+
   delay(500);
-}
-
-int checkAddresses(){
-  printf("----------------------------------\n");
-  for (nodeNum=1; nodeNum<7; nodeNum++){
-    printf("NodeID: %i , ", nodeNum);
-    nodeAddress=mesh.getAddress(nodeNum);
-    bufferval=nodeNum-1;
-    if(nodeAddress>0){
-      printf("RF24 Address: 0%o\n", nodeAddress);
-      AddressBook[bufferval]=nodeAddress;
-      printf("0%o\n", AddressBook[bufferval]);
-    }
-    else 
-      printf("No Address exists for this nodeID\n");
-      AddressBook[bufferval]=0;
-  }
-  return 0;
 }
 
