@@ -171,24 +171,12 @@ void sendMessage()
     switchRole(message_string.substring(0,1));
   else //else send the message
   {
-    bool length_sent = false;
-    bool message_sent = false;
-      
     // send length of incoming message to receiver
     radio.write( &num_of_chars, sizeof(int));
 
     // if length sent, send the text message
-    if (length_sent)
-    {
-      radio.write( &message_buffer, sizeof(message_buffer));
-      if (message_sent)
-        printf("Message sent...\n\r");
-      else
-        printf("Failed to send message...\n\r");
-    }
-    else
-      printf("Failed to send length...\n\r");
-  }  
+    radio.write( &message_buffer, sizeof(message_buffer));
+  }
 }
 
 
