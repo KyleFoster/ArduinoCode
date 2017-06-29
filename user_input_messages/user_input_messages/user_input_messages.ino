@@ -144,6 +144,8 @@ void switchRole(String c)
 
     // Become the primary transmitter (ping out)
     role = role_ping_out;
+    radio.openWritingPipe(pipes[0]);
+    radio.openReadingPipe(1,pipes[1]);
   }
   else if (c == "r"  && role == role_ping_out)
   {
@@ -151,6 +153,8 @@ void switchRole(String c)
       
     // Become the primary receiver (pong back)
     role = role_pong_back;
+    radio.openWritingPipe(pipes[1]);
+    radio.openReadingPipe(1,pipes[0]);
     radio.startListening();
   } 
 }
