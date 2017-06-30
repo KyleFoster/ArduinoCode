@@ -78,12 +78,12 @@ void loop() {
 
   while( network.available() )  {
   RF24NetworkHeader header;
-  uint32_t time;
+  int message;
   network.peek(header);
-  if(header.type == 'T'){
-    network.read(header,&time,sizeof(time));
-    Serial.print("Got time: ");
-    Serial.println(time);
+  if(header.type == 'N'){
+    network.read(header,&message,sizeof(message));
+    Serial.print("Got message: ");
+    Serial.println(message);
   }
 }
 
