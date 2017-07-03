@@ -3,6 +3,7 @@
 #include "RF24.h"
 #include "printf.h"
 #include "EEPROM.h"
+#include <string.h>
 
 RF24 radio(9,10);
 const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
@@ -77,22 +78,25 @@ void loop(void) {
 
 // ***Send Message***
 void sendMessage() {
-  int num_of_chars = 0;
-  String colon = ": ";
-  String nameOut = myName + colon;
+    char intro[15];
+    String colon = ": ";
+    String nameOut = myName + colon;
+    nameOut.toCharArray(intro, nameOut.length());
 
   //read in message from serial, press enter to send
   memset(send_payload, 0, 100);
-  num_of_chars = Serial.readBytesUntil('\n',send_payload,100);
-  
-  String message_string = String(nameOut + send_payload);
+  Serial.readBytesUntil('\n',send_payload,100);
+
+  char* m;
+  m = strcat(intro, send_payload);
+  //String message_string = nameOut + String(send_payload);
 
   radio.openWritingPipe(pipes[0]);
   radio.openReadingPipe(1,pipes[1]);
   radio.stopListening();
 
-  radio.write(&send_payload, sizeof(send_payload));
-  Serial.println(message_string);
+  radio.write(&m, sizeof(m));
+  Serial.println(m);
 }
 
 // ***Receive Message***
@@ -112,7 +116,7 @@ void receiveMessage() {
     }  
   }
   
-    // wait until message us ready to be received 
+    // wait until message is ready to be received 
     memset(received_payload, 0, 32);
     int len = radio.getDynamicPayloadSize();
     
