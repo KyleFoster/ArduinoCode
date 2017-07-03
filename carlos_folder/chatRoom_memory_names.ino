@@ -3,6 +3,7 @@
 #include "RF24.h"
 #include "printf.h"
 #include "EEPROM.h"
+#include <string.h>
 
 RF24 radio(9,10);
 const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
@@ -29,22 +30,22 @@ void setup() {
     names[i] = EEPROM.read(i);
   }
   myName = getMyName(names);
-  Serial.print("This Arduino belongs to ");
-  Serial.print(names);
-  Serial.println(".");
-  Serial.print("Load ");
-  Serial.print(names);
-  Serial.println("'s profile? Type 'Y' for Yes or any key to create a new profile.");
+  String name1 = String(names);
+  Serial.print("This Arduino belongs to " + name1 + ".\n\r");
+  Serial.print("Load " + name1 + "'s profile? Type 'Y' for Yes or any key to create a new profile.\n\r");
   Serial.flush();
-  while(!Serial.available());
+  while(!Serial.available()) { };
   String load = Serial.readString();
   load.toUpperCase();
-  if(load == "Y") {
+  if (load == "Y") 
+  {
     power = EEPROM.read(powerAddr); //Recall saved parameters and skip setup dialogs
       choosePower(power);
     rate = EEPROM.read(rateAddr);
       setRate(rate);
-  }else {
+  }
+  else 
+  {
     Serial.print("Enter a new name: ");
     Serial.flush();
     while(!Serial.available());
@@ -64,35 +65,38 @@ void setup() {
     while(!Serial.available());
     rate = Serial.parseInt();
     setRate(rate);
-    EEPROM.write(rateAddr, rate);
-    
+    EEPROM.write(rateAddr, rate); 
   }
   radio.printDetails();
 }
 
-void loop(void) {       
+void loop(void) 
+{       
   receiveMessage();
 }
 
-
 // ***Send Message***
-void sendMessage() {
-  int num_of_chars = 0;
-  String colon = ": ";
-  String nameOut = myName + colon;
+void sendMessage() 
+{
+  //Serial.print(myName);
+  char message[120] = "";
+ //strcat(message, myName);
+  strcat(message, ": ");
 
   //read in message from serial, press enter to send
   memset(send_payload, 0, 100);
-  num_of_chars = Serial.readBytesUntil('\n',send_payload,100);
-  
-  String message_string = String(nameOut + send_payload);
+  Serial.readBytesUntil('\n',send_payload,100);
+
+  strcat(message, send_payload);
+  String str1 = String(message);
+  Serial.println(myName + str1);
 
   radio.openWritingPipe(pipes[0]);
   radio.openReadingPipe(1,pipes[1]);
   radio.stopListening();
 
-  radio.write(&send_payload, sizeof(send_payload));
-  Serial.println(message_string);
+  radio.write(&message, sizeof(message));
+  //Serial.println(*myName);
 }
 
 // ***Receive Message***
@@ -112,7 +116,7 @@ void receiveMessage() {
     }  
   }
   
-    // wait until message us ready to be received 
+    // wait until message is ready to be received 
     memset(received_payload, 0, 32);
     int len = radio.getDynamicPayloadSize();
     
