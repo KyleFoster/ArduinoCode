@@ -8,7 +8,6 @@ RF24 radio(9,10);
 const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
 char send_payload[100] = "";
 char received_payload[100] = "";
-char theirName[100] = "";
 
 int power, rate;
 int nameLength;
@@ -79,28 +78,26 @@ void loop(void) {
 // ***Send Message***
 void sendMessage() {
   int num_of_chars = 0;
+  String colon = ": ";
+  String nameOut = myName + colon;
 
   //read in message from serial, press enter to send
   memset(send_payload, 0, 100);
   num_of_chars = Serial.readBytesUntil('\n',send_payload,100);
   
-  String message_string = String(send_payload);
+  String message_string = String(nameOut + send_payload);
 
   radio.openWritingPipe(pipes[0]);
   radio.openReadingPipe(1,pipes[1]);
   radio.stopListening();
 
-  radio.write(&myName, sizeof(myName));
   radio.write(&send_payload, sizeof(send_payload));
-  Serial.print(myName);
-  Serial.print(": ");
   Serial.println(message_string);
 }
 
 // ***Receive Message***
 void receiveMessage() { 
   int num_of_chars_received = 0;
-  char switch_code[100];
 
   // wait until there is a message to receive
   while (!radio.available()) 
@@ -116,18 +113,15 @@ void receiveMessage() {
   }
   
     // wait until message us ready to be received 
-    memset(theirName, 0, 32);
     memset(received_payload, 0, 32);
     int len = radio.getDynamicPayloadSize();
     
     // Receive the message
-    radio.read(&theirName, len);
     radio.read(&received_payload, len);
 
     //convert to String and print
-    String n = String(theirName);
     String m = String(received_payload);
-    Serial.print("Them: " + m.substring(0,len) + "\n\r");
+    Serial.print(m.substring(0,len) + "\n\r");
   
 }
 
