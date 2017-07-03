@@ -18,7 +18,7 @@ void setup(void) {
   radio.setRetries(15,15);
   radio.startListening();
   radio.printDetails();
-  radio.setChannel(3);
+  radio.setChannel(4);
   radio.setAutoAck(true);
 }
 

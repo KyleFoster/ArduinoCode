@@ -1,50 +1,13 @@
-/*
- Copyright (C) 2011 J. Coliz <maniacbug@ymail.com>
-
- This program is free software; you can redistribute it and/or
- modify it under the terms of the GNU General Public License
- version 2 as published by the Free Software Foundation.
- */
-
-/**
- * Example for Getting Started with nRF24L01+ radios. 
- *
- * This is an example of how to use the RF24 class.  Write this sketch to two 
- * different nodes.  Put one of the nodes into 'transmit' mode by connecting 
- * with the serial monitor and sending a 'T'.  The ping node sends the current 
- * time to the pong node, which responds by sending the value back.  The ping 
- * node can then see how long the whole cycle took.
- */
-
 #include <SPI.h>
 #include <stdio.h>
 #include "nRF24L01.h"
 #include "RF24.h"
 #include "printf.h"
 
-//
-// Hardware configuration
-//
-
-// Set up nRF24L01 radio on SPI bus plus pins 9 & 10 
-
 RF24 radio(9,10);
 
-//
-// Topology
-//
-
-// Radio pipe addresses for the 2 nodes to communicate.
 const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
 
-//
-// Role management
-//
-// Set up role.  This sketch uses the same software for all the nodes
-// in this system.  Doing so greatly simplifies testing.  
-//
-
-// The various roles supported by this sketch
 typedef enum { role_ping_out = 1, role_pong_back } role_e;
 
 // The debug-friendly names of those roles
@@ -53,25 +16,22 @@ const char* role_friendly_name[] = { "invalid", "Ping out", "Pong back"};
 // The role of the current running sketch
 role_e role = role_pong_back;
 
+char send_payload[100] = "";
+char received_payload[100] = "";
+
 void setup(void)
 {
-  //
-  // Print preamble
-  //
-
+ 
   Serial.begin(57600);
   printf_begin();
   printf("\n\rRF24/examples/GettingStarted/\n\r");
   printf("ROLE: %s\n\r",role_friendly_name[role]);
   printf("*** PRESS 'T' to begin transmitting to the other node\n\r");
 
-  //
-  // Setup and configure rf radio
-  //
-
   radio.begin();
 
   // optionally, increase the delay between retries & # of retries
+  radio.enableDynamicPayloads();
   radio.setRetries(15,15);
 
   // optionally, reduce the payload size.  seems to
@@ -87,27 +47,18 @@ void setup(void)
   // Open 'our' pipe for writing
   // Open the 'other' pipe for reading, in position #1 (we can have up to 5 pipes open for reading)
 
-  //if ( role == role_ping_out )
+  if ( role == role_ping_out )
   {
-    //radio.openWritingPipe(pipes[0]);
+    radio.openWritingPipe(pipes[0]);
     radio.openReadingPipe(1,pipes[1]);
   }
-  //else
+  else
   {
-    //radio.openWritingPipe(pipes[1]);
-    //radio.openReadingPipe(1,pipes[0]);
+    radio.openWritingPipe(pipes[1]);
+    radio.openReadingPipe(1,pipes[0]);
   }
 
-  //
-  // Start listening
-  //
-
   radio.startListening();
-
-  //
-  // Dump the configuration of the rf unit for debugging
-  //
-
   radio.printDetails();
 }
 
@@ -127,8 +78,6 @@ void loop(void)
 
   if ( role == role_pong_back )
   {
-    // Start listening so you can receive a message
-    radio.startListening();
     receiveMessage();
   }
 }
@@ -141,7 +90,6 @@ void switchRole(String c)
     printf("*** CHANGING TO TRANSMIT ROLE -- ENTER 'receive1' TO SWITCH BACK\n\r");
 
     // Become the primary transmitter (ping out)
-    radio.stopListening();
     role = role_ping_out;
     radio.openWritingPipe(pipes[0]);
     radio.openReadingPipe(1,pipes[1]);
@@ -151,10 +99,10 @@ void switchRole(String c)
     printf("*** CHANGING TO RECEIVE ROLE -- ENTER 'transmit1' TO SWITCH BACK\n\r");
       
     // Become the primary receiver (pong back)
-    radio.startListening();
     role = role_pong_back;
     radio.openWritingPipe(pipes[1]);
     radio.openReadingPipe(1,pipes[0]);
+    radio.startListening();
   } 
 }
 
@@ -162,40 +110,25 @@ void switchRole(String c)
 void sendMessage()
 {
   int num_of_chars = 0;
-  char message_buffer[100];
+  //char message_buffer[100];
 
   printf("Enter a message to transmit...\n\r");
   
   // wait for user to write message to begin transmission
-  while (Serial.available() == 0) { }
+  while (!Serial.available()) { }
   
   //read in message from serial, press enter to send
-  num_of_chars = Serial.readBytesUntil('\n',message_buffer,100);
+  num_of_chars = Serial.readBytesUntil('\n',send_payload,100);
 
   //Switch roles if user inputs receive1
-  String message_string = String(message_buffer);
+  String message_string = String(send_payload);
   if (message_string.substring(0,8) == "receive1" || message_string.substring(0,9) == "transmit1")
     switchRole(message_string.substring(0,1));
   else //else send the message
   {
-    bool length_sent = false;
-    bool message_sent = false;
-      
-    // send length of incoming message to receiver
-    length_sent = radio.write( &num_of_chars, sizeof(int));
-
-    // if length sent, send the text message
-    if (length_sent)
-    {
-      message_sent = radio.write( &message_buffer, num_of_chars);
-      if (message_sent)
-        printf("Message sent...\n\r");
-      else
-        printf("Failed to send message...\n\r");
-    }
-    else
-      printf("Failed to send length...\n\r");
-  }  
+    //send the text message
+    radio.write( &send_payload, sizeof(send_payload));
+  }
 }
 
 
@@ -209,10 +142,10 @@ void receiveMessage()
   printf("Waiting for incoming transmissions...\n\r");
 
   // wait until there is a message to receive
-  while ( radio.available() == false) 
+  while ( !radio.available()) 
   {
     //check if the user wants to switch role while waiting for a message
-    if (Serial.available() > 0)
+    if (Serial.available())
     {
       Serial.readBytesUntil('\n', switch_code, 10);
       String s = String(switch_code);
@@ -227,33 +160,16 @@ void receiveMessage()
 
   // if they dont want to switch roles, receive a message
   if (!switch_role)
-  {
-    bool length_read = false;
-    bool message_read = false;
+  { 
+    // wait until message us ready to be received 
+    int len = radio.getDynamicPayloadSize();
     
-    // Receive the number of characters in the message being sent back
-    length_read = radio.read( &num_of_chars_received, sizeof(int));
+    // Receive the message
+    radio.read( &received_payload, len);
 
-    if (length_read)
-    {
-      // wait until message us ready to be received 
-      while (radio.available() == false) { }
-    
-      // Receive the message and print
-      char received_message[num_of_chars_received];
-      message_read = radio.read( &received_message, sizeof(received_message));
-      if (message_read)
-      {
-        String m = String(received_message);
-        Serial.print("Got message: " + m.substring(0,num_of_chars_received) + "\n\r");
-      }
-      else
-        printf("Failed to receive mesaage...\n\r");
-    }
-    else
-      printf("Failed to receive message length...\n\r");
+    //convert to String and print
+    String m = String(received_payload);
+    Serial.print("Got message: " + m.substring(0,len) + "\n\r");
   }
 }
   
-
-// vim:cin:ai:sts=2 sw=2 ft=cpp
