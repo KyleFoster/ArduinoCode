@@ -10,12 +10,13 @@ const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
 char send_payload[100] = "";
 char received_payload[100] = "";
 
-int power, rate;
+int power, rate, channel;
 int nameLength;
 int nameLengthAddr = 11;
 int nameBegin =  0;
 int powerAddr = 12;
 int rateAddr = 13;
+int channelAddr = 14;
 String myName;
 
 void setup() {
@@ -23,6 +24,10 @@ void setup() {
   Serial.begin(9600);
   printf_begin();
   radio.begin();
+  radio.enableDynamicPayloads();
+  radio.setRetries(15,15);
+  radio.startListening();
+  radio.setAutoAck(true);
 
   nameLength = EEPROM.read(nameLengthAddr);
   char names[nameLength];
@@ -43,6 +48,8 @@ void setup() {
       choosePower(power);
     rate = EEPROM.read(rateAddr);
       setRate(rate);
+    channel = EEPROM.read(channelAddr);
+      setChannel(channel);
   }
   else 
   {
@@ -66,6 +73,20 @@ void setup() {
     rate = Serial.parseInt();
     setRate(rate);
     EEPROM.write(rateAddr, rate); 
+
+    Serial.println("Set Channel: Enter 0 - 127 or type 76 for default channel");
+    Serial.flush();
+    while(!Serial.available());
+    channel = Serial.parseInt();
+    float frequency = ((2400 + channel) * 0.001);
+    Serial.print("Channel set to ");
+    Serial.print(channel);
+    Serial.print(". Frequency = ");
+    Serial.print((float)(frequency),3);
+    Serial.println("GHz\n\r");
+    setChannel(channel);
+    EEPROM.write(channelAddr, channel);
+    
   }
   radio.printDetails();
 }
@@ -151,14 +172,16 @@ String eepromRead(int startAddress, int strLength) {
 }
 
 // ***EEPROM Clear***
-void eepromClear(int startAddress, int strLength) {
+void eepromClear(int startAddress, int strLength) 
+{
   for (int i = 0; i <= strLength; i++) {
      EEPROM.write(i, 0);
    }
 }
 
 // ***Choose Power***
-void choosePower(int POWER) { //Select which power level to run the nRF24L01+ at
+void choosePower(int POWER)  //Select which power level to run the nRF24L01+ at
+{
     if(POWER == 0) {
       radio.setPALevel(RF24_PA_MIN);
     }else if(POWER == 1) {
@@ -171,7 +194,8 @@ void choosePower(int POWER) { //Select which power level to run the nRF24L01+ at
 }
 
 // ***Set Data Rate***
-void setRate(int RATE) { //Select data rate to jam specific communication protocols
+void setRate(int RATE) //Select data rate to jam specific communication protocols
+{ 
   if(RATE == 0) {
     radio.setDataRate(RF24_250KBPS);
   }else if(RATE == 1) {
@@ -181,9 +205,16 @@ void setRate(int RATE) { //Select data rate to jam specific communication protoc
   }
 }
 
+// ***Set Channel Frequency***
+void setChannel(int CHANNEL) 
+{
+  radio.setChannel(CHANNEL);  
+}
+
 // ***Get My Name to be Globally available***
 
-String getMyName(String myName) {
+String getMyName(String myName)
+{
   String x = myName;
   return x;
 }
