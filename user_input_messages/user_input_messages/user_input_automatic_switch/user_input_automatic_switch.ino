@@ -18,7 +18,8 @@ void setup(void) {
   radio.setRetries(15,15);
   radio.startListening();
   radio.printDetails();
-  
+  radio.setChannel(3);
+  radio.setAutoAck(true);
 }
 
 
@@ -43,15 +44,11 @@ void sendMessage() {
   radio.stopListening();
   
   radio.write(&send_payload, sizeof(send_payload));
-  Serial.print("Me: ");
-  Serial.println(message_string);
+  Serial.print("Me: " + message_string + "\n\r");
 }
 
 // ***Receive Message***
 void receiveMessage() { 
-  int num_of_chars_received = 0;
-  char switch_code[100];
-
   // wait until there is a message to receive
   while (!radio.available()) 
   {
