@@ -30,22 +30,22 @@ void setup() {
     names[i] = EEPROM.read(i);
   }
   myName = getMyName(names);
-  Serial.print("This Arduino belongs to ");
-  Serial.print(names);
-  Serial.println(".");
-  Serial.print("Load ");
-  Serial.print(names);
-  Serial.println("'s profile? Type 'Y' for Yes or any key to create a new profile.");
+  String name1 = String(names);
+  Serial.print("This Arduino belongs to " + name1 + ".\n\r");
+  Serial.print("Load " + name1 + "'s profile? Type 'Y' for Yes or any key to create a new profile.\n\r");
   Serial.flush();
-  while(!Serial.available());
+  while(!Serial.available()) { };
   String load = Serial.readString();
   load.toUpperCase();
-  if(load == "Y") {
+  if (load == "Y") 
+  {
     power = EEPROM.read(powerAddr); //Recall saved parameters and skip setup dialogs
       choosePower(power);
     rate = EEPROM.read(rateAddr);
       setRate(rate);
-  }else {
+  }
+  else 
+  {
     Serial.print("Enter a new name: ");
     Serial.flush();
     while(!Serial.available());
@@ -65,38 +65,38 @@ void setup() {
     while(!Serial.available());
     rate = Serial.parseInt();
     setRate(rate);
-    EEPROM.write(rateAddr, rate);
-    
+    EEPROM.write(rateAddr, rate); 
   }
   radio.printDetails();
 }
 
-void loop(void) {       
+void loop(void) 
+{       
   receiveMessage();
 }
 
-
 // ***Send Message***
-void sendMessage() {
-    char intro[15];
-    String colon = ": ";
-    String nameOut = myName + colon;
-    nameOut.toCharArray(intro, nameOut.length());
+void sendMessage() 
+{
+  //Serial.print(myName);
+  char message[120] = "";
+ //strcat(message, myName);
+  strcat(message, ": ");
 
   //read in message from serial, press enter to send
   memset(send_payload, 0, 100);
   Serial.readBytesUntil('\n',send_payload,100);
 
-  char* m;
-  m = strcat(intro, send_payload);
-  //String message_string = nameOut + String(send_payload);
+  strcat(message, send_payload);
+  String str1 = String(message);
+  Serial.println(myName + str1);
 
   radio.openWritingPipe(pipes[0]);
   radio.openReadingPipe(1,pipes[1]);
   radio.stopListening();
 
-  radio.write(&m, sizeof(m));
-  Serial.println(m);
+  radio.write(&message, sizeof(message));
+  //Serial.println(*myName);
 }
 
 // ***Receive Message***
