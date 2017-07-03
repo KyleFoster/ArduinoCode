@@ -8,6 +8,7 @@ RF24 radio(9,10);
 const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
 char send_payload[100] = "";
 char received_payload[100] = "";
+char theirName[100] = "";
 
 int power, rate;
 int nameLength;
@@ -29,7 +30,6 @@ void setup() {
     names[i] = EEPROM.read(i);
   }
   myName = getMyName(names);
-  Serial.print(nameLength);
   Serial.print("This Arduino belongs to ");
   Serial.print(names);
   Serial.println(".");
@@ -92,7 +92,8 @@ void sendMessage() {
 
   radio.write(&myName, sizeof(myName));
   radio.write(&send_payload, sizeof(send_payload));
-  Serial.print("Me: ");
+  Serial.print(myName);
+  Serial.print(": ");
   Serial.println(message_string);
 }
 
@@ -115,13 +116,16 @@ void receiveMessage() {
   }
   
     // wait until message us ready to be received 
+    memset(theirName, 0, 32);
     memset(received_payload, 0, 32);
     int len = radio.getDynamicPayloadSize();
     
     // Receive the message
+    radio.read(&theirName, len);
     radio.read(&received_payload, len);
 
     //convert to String and print
+    String n = String(theirName);
     String m = String(received_payload);
     Serial.print("Them: " + m.substring(0,len) + "\n\r");
   
