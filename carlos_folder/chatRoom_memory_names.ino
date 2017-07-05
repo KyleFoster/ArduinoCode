@@ -9,15 +9,17 @@ RF24 radio(9,10);
 const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
 char send_payload[100] = "";
 char received_payload[100] = "";
+char names[10];
 
 int power, rate, channel;
-int nameLength;
+int nameLength = 10;
 int nameBegin =  0;
 int nameLengthAddr = 11;
 int powerAddr = 12;
 int rateAddr = 13;
 int channelAddr = 14;
 String myName;
+
 
 void setup() {
 
@@ -29,8 +31,8 @@ void setup() {
   radio.startListening();
   radio.setAutoAck(true);
 
-  nameLength = EEPROM.read(nameLengthAddr);
-  char names[nameLength];
+  //nameLength = EEPROM.read(nameLengthAddr);
+  //char names[nameLength];
   for(int i = nameBegin; i <= nameLength; i++) {
     names[i] = EEPROM.read(i);
   }
@@ -87,6 +89,7 @@ void setup() {
     EEPROM.write(channelAddr, channel);
   }
   radio.printDetails();
+  Serial.println("---------------Begin Chat!---------------\n\r");
 }
 
 void loop(void) 
@@ -100,13 +103,13 @@ void sendMessage()
   memset(send_payload, 0, 100);
   Serial.readBytesUntil('\n',send_payload,100);
 
-  String message = myName + ": " + String(send_payload);
-  
+  String message = String(names) + ": " + String(send_payload);
+ 
   radio.openWritingPipe(pipes[0]);
   radio.openReadingPipe(1,pipes[1]);
   radio.stopListening();
   
-  radio.write(&message, sizeof(message));
+  radio.write(&send_payload, sizeof(send_payload));
   Serial.println(message);
 }
 
@@ -215,7 +218,7 @@ void setChannel(int CHANNEL)
 }
 
 // ***Get My Name to be Globally available***
-String getMyName(String myName)
+String getMyName(char myName[])
 {
   String x = String(myName);
   return x;
