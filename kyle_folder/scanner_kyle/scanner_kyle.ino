@@ -9,8 +9,9 @@ char ack[100] = "";
 char send_code[5] = "1010";
 char send_payload[100] = "";
 char received_payload[100] = "";
-String code;
+char broadcast_message[5] = "1234";
 bool search_channels = true;
+
 
 void setup(void)
 {
@@ -32,15 +33,17 @@ void loop(void)
 
 
 void findChannel() {
+  Serial.println("searching for channels...");
   bool found_channel = false;
   int i = 127;
   
   while (!found_channel)
   {
     radio.setChannel(i);
+    //Serial.println("On channel: " + i);
     if ( radio.testCarrier())
     {
-      printf("Sending message on channel: %d\n\r", i);
+      printf("Sending message on channel: %d \n\r", i);
       sendCode();
       receiveAutoAck();
       if (checkCode())
@@ -114,6 +117,12 @@ void receiveMessage() {
   // wait until there is a message to receive
   while (!radio.available()) 
   {
+    //Broadcast a message for other radios to pick up
+    broadcast();
+    radio.openWritingPipe(pipes[1]);
+    radio.openReadingPipe(1,pipes[0]);
+    radio.startListening();
+  
     //check if the user wants to switch role while waiting for a message
     if (Serial.available())
     {
@@ -134,8 +143,23 @@ void receiveMessage() {
 
   //convert to String and print
   String m = String(received_payload);
-  Serial.print("Them: " + m.substring(0,len) + "\n\r");
+
+  if (m != "1234")
+    Serial.print("Them: " + m.substring(0,len) + "\n\r");
 }
+
+
+void broadcast() {
+  radio.openWritingPipe(pipes[0]);
+  radio.openReadingPipe(1,pipes[1]);
+  radio.stopListening();
+  
+  radio.write(&broadcast_message, 5);
+  if (radio.isAckPayloadAvailable())
+    receiveAutoAck();  
+}
+
+
 
 
 

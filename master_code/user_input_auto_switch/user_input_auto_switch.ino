@@ -45,10 +45,7 @@ void sendMessage() {
   radio.openReadingPipe(1,pipes[1]);
   radio.stopListening();
   
-  bool send_it = false;
-  send_it = radio.write(&send_payload, sizeof(send_payload));
-  if (send_it)
-    Serial.println("Message sent successfully...");
+  radio.write(&send_payload, sizeof(send_payload));
   Serial.print("Me: " + message_string + "\n\r");
   
 }
