@@ -104,7 +104,6 @@ void sendMessage()
   Serial.readBytesUntil('\n',send_payload,100);
 
   char colon[3] = ": ";
-  char message[115] = names + colon;
  
   radio.openWritingPipe(pipes[0]);
   radio.openReadingPipe(1,pipes[1]);
