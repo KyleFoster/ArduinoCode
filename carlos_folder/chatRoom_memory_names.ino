@@ -6,7 +6,7 @@
 #include <string.h>
 
 RF24 radio(9,10);
-const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
+const uint64_t pipes[2] = {0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL};
 char send_payload[100] = "";
 char received_payload[100] = "";
 char names[10];
@@ -103,14 +103,18 @@ void sendMessage()
   memset(send_payload, 0, 100);
   Serial.readBytesUntil('\n',send_payload,100);
 
-  String message = String(names) + ": " + String(send_payload);
+  char colon[3] = ": ";
+  char message[115] = names + colon;
  
   radio.openWritingPipe(pipes[0]);
   radio.openReadingPipe(1,pipes[1]);
   radio.stopListening();
   
+  radio.write(&names, sizeof(names));
   radio.write(&send_payload, sizeof(send_payload));
-  Serial.println(message);
+  Serial.print(names);
+  Serial.print(": ");
+  Serial.println(send_payload);
 }
 
 // ***Receive Message***
