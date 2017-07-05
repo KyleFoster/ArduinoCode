@@ -11,15 +11,18 @@ char received_payload[100] = "";
 
 void setup(void) {
   
-  Serial.begin(57600);
+  Serial.begin(115200);
   printf_begin();
   radio.begin();
   radio.enableDynamicPayloads();
   radio.setRetries(15,15);
   radio.startListening();
   radio.printDetails();
-  radio.setChannel(4);
+  radio.setChannel(3);
   radio.setAutoAck(true);
+  //radio.openWritingPipe(pipes[1]);
+  //radio.openReadingPipe(1,pipes[0]);
+  //radio.startListening();
 }
 
 

@@ -64,17 +64,43 @@ void receiveMessage() {
       radio.startListening();
     }  
   }
-  
-    // wait until message us ready to be received 
-    memset(received_payload, 0, 32);
-    int len = radio.getDynamicPayloadSize();
-    
-    // Receive the message
-    radio.read(&received_payload, len);
 
+  //Send an automatic acknoledgement of a packet being received to the sender
+  radio.writeAckPayload(pipes[0], "1010", 5);
+  
+  // wait until message us ready to be received 
+  memset(received_payload, 0, 32);
+  int len = radio.getDynamicPayloadSize();
+  
+  // Receive the message
+  radio.read(&received_payload, len);
+
+<<<<<<< HEAD
     //convert to String and print
     String m = String(received_payload);
     Serial.print("Them: " + m.substring(0,len) + "\n\r");
   
 }
 
+=======
+  //convert to String and print
+  String m = String(received_payload);
+
+  //check for ack packet 
+  receiveAckPacket();
+  
+  Serial.print("Them: " + m.substring(0,len) + "\n\r");
+  
+}
+
+void receiveAckPacket()
+{
+  while (!radio.available()) { }
+  
+  memset(ack_packet, 0, 5);
+  radio.read(&ack_packet, 5);
+  String ack_code = String(ack_packet);
+  Serial.println("Received ack code : " + ack_code + "\n\r"); 
+}
+
+>>>>>>> 924888a4216d32857c77ea5f59ae2db5ebec0c63
