@@ -10,7 +10,9 @@ char send_code[5] = "1010";
 char send_payload[100] = "";
 char received_payload[100] = "";
 char broadcast_message[5] = "1234";
+char user_input[5] = "";
 bool search_channels = true;
+
 
 
 void setup(void)
@@ -26,9 +28,29 @@ void setup(void)
 
 void loop(void)
 {
-  if (search_channels)
-    findChannel();
-  receiveMessage(); 
+  Serial.println("Enter 1 to set your own channel, Enter 2 to search: ");
+
+  while (!Serial.available()) { }
+  Serial.readBytesUntil('\n',user_input,5);
+  String user_string = String(user_input);
+
+  if (user_string == "1")
+  {
+    Serial.println("Set your channel 0-127: ");
+    while (!Serial.available()) { }
+    Serial.readBytesUntil('\n',user_input,5);
+    user_string = String(user_input);
+    Serial.println("Setting channel to " + user_string);
+    int c = user_string.toInt();
+    radio.setChannel(c);
+    receiveMessage(); 
+  }
+  else
+  {
+    if (search_channels)
+      findChannel();
+    receiveMessage(); 
+  }  
 }
 
 
@@ -40,6 +62,7 @@ void findChannel() {
   while (!found_channel)
   {
     radio.setChannel(i);
+    broadcast();
     //Serial.println("On channel: " + i);
     if ( radio.testCarrier())
     {
