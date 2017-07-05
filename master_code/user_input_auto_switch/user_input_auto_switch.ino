@@ -9,11 +9,13 @@ const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
 char send_payload[100] = "";
 char received_payload[100] = "";
 
+
 void setup(void) {
   
   Serial.begin(57600);
   printf_begin();
   radio.begin();
+  radio.setChannel(60);
   radio.enableDynamicPayloads();
   radio.setRetries(15,15);
   radio.startListening();
@@ -23,7 +25,8 @@ void setup(void) {
 }
 
 
-void loop(void) {       
+void loop(void) 
+{       
   receiveMessage();
 }
 
@@ -45,6 +48,7 @@ void sendMessage() {
   
   radio.write(&send_payload, sizeof(send_payload));
   Serial.print("Me: " + message_string + "\n\r");
+  
 }
 
 // ***Receive Message***
@@ -61,8 +65,7 @@ void receiveMessage() {
       radio.startListening();
     }  
   }
-  
-    // wait until message us ready to be received 
+   
     memset(received_payload, 0, 32);
     int len = radio.getDynamicPayloadSize();
     

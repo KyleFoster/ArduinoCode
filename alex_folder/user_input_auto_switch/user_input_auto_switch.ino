@@ -8,6 +8,7 @@ RF24 radio(9,10);
 const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
 char send_payload[100] = "";
 char received_payload[100] = "";
+char ack_packet[5] = "";
 
 void setup(void) {
   
@@ -49,6 +50,9 @@ void sendMessage() {
 
 // ***Receive Message***
 void receiveMessage() { 
+  //Send an automatic acknoledgement of a packet being received to the sender
+  radio.writeAckPayload(pipes[0], "1010", 5);
+  
   // wait until there is a message to receive
   while (!radio.available()) 
   {
@@ -71,7 +75,23 @@ void receiveMessage() {
 
     //convert to String and print
     String m = String(received_payload);
+
+    //check for ack packet 
+    receiveAckPacket();
+    
     Serial.print("Them: " + m.substring(0,len) + "\n\r");
   
+}
+
+void receiveAckPacket()
+{
+  delay(100);
+  if (radio.available())
+  {
+    memset(ack_packet, 0, 5);
+    radio.read(&ack_packet, 5);
+    String ack_code = String(ack_packet);
+    Serial.println("Received ack code : " + ack_code + "\n\r");
+  }  
 }
 
