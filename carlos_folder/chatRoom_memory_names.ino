@@ -9,15 +9,17 @@ RF24 radio(9,10);
 const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
 char send_payload[100] = "";
 char received_payload[100] = "";
+char names[10];
 
 int power, rate, channel;
-int nameLength;
-int nameLengthAddr = 11;
+int nameLength = 10;
 int nameBegin =  0;
+int nameLengthAddr = 11;
 int powerAddr = 12;
 int rateAddr = 13;
 int channelAddr = 14;
 String myName;
+
 
 void setup() {
 
@@ -29,17 +31,16 @@ void setup() {
   radio.startListening();
   radio.setAutoAck(true);
 
-  nameLength = EEPROM.read(nameLengthAddr);
-  char names[nameLength];
+  //nameLength = EEPROM.read(nameLengthAddr);
+  //char names[nameLength];
   for(int i = nameBegin; i <= nameLength; i++) {
     names[i] = EEPROM.read(i);
   }
   myName = getMyName(names);
-  String name1 = String(names);
-  Serial.print("This Arduino belongs to " + name1 + ".\n\r");
-  Serial.print("Load " + name1 + "'s profile? Type 'Y' for Yes or any key to create a new profile.\n\r");
+  Serial.print("This Arduino belongs to " + myName + ".\n\r");
+  Serial.print("Load " + myName + "'s profile? Type 'Y' for Yes or any key to create a new profile.\n\r");
   Serial.flush();
-  while(!Serial.available()) { };
+  while(!Serial.available());
   String load = Serial.readString();
   load.toUpperCase();
   if (load == "Y") 
@@ -53,16 +54,16 @@ void setup() {
   }
   else 
   {
-    Serial.print("Enter a new name: ");
+    Serial.print("Enter a new name. Max 10 characters: ");
     Serial.flush();
-    while(!Serial.available());
+    while(!Serial.available()); //Wait until something is being sent to the Arduino from the Serial monitor
     String newName = Serial.readString(); 
     nameLength = eepromWrite(nameBegin, newName);
     Serial.println(newName);
 
     Serial.println("Choose TX Power Level:\n\r 0: -18dBm\n\r 1: -12dBm\n\r 2: -6dBm \n\r 3: 0dBm  \n\r");
     Serial.flush(); //Clear Serial buffer
-    while(!Serial.available()); //Wait until something is being sent to the Arduino from the Serial monitor
+    while(!Serial.available());
     power = Serial.parseInt();
     choosePower(power);
     EEPROM.write(powerAddr, power);
@@ -74,7 +75,7 @@ void setup() {
     setRate(rate);
     EEPROM.write(rateAddr, rate); 
 
-    Serial.println("Set Channel: Enter 0 - 127 or type 76 for default channel");
+    Serial.println("Set Channel: Enter 0 - 127 or 76 for default");
     Serial.flush();
     while(!Serial.available());
     channel = Serial.parseInt();
@@ -83,12 +84,12 @@ void setup() {
     Serial.print(channel);
     Serial.print(". Frequency = ");
     Serial.print((float)(frequency),3);
-    Serial.println("GHz\n\r");
+    Serial.println(" GHz\n\r");
     setChannel(channel);
     EEPROM.write(channelAddr, channel);
-    
   }
   radio.printDetails();
+  Serial.println("---------------Begin Chat!---------------\n\r");
 }
 
 void loop(void) 
@@ -99,35 +100,25 @@ void loop(void)
 // ***Send Message***
 void sendMessage() 
 {
-  //Serial.print(myName);
-  char message[120] = "";
- //strcat(message, myName);
-  strcat(message, ": ");
-
-  //read in message from serial, press enter to send
   memset(send_payload, 0, 100);
   Serial.readBytesUntil('\n',send_payload,100);
 
-  strcat(message, send_payload);
-  String str1 = String(message);
-  Serial.println(myName + str1);
-
+  String message = String(names) + ": " + String(send_payload);
+ 
   radio.openWritingPipe(pipes[0]);
   radio.openReadingPipe(1,pipes[1]);
   radio.stopListening();
-
-  radio.write(&message, sizeof(message));
-  //Serial.println(*myName);
+  
+  radio.write(&send_payload, sizeof(send_payload));
+  Serial.println(message);
 }
 
 // ***Receive Message***
-void receiveMessage() { 
-  int num_of_chars_received = 0;
-
+void receiveMessage() 
+{ 
   // wait until there is a message to receive
   while (!radio.available()) 
   {
-    //check if the user wants to switch role while waiting for a message
     if (Serial.available())
     {
       sendMessage();
@@ -145,17 +136,18 @@ void receiveMessage() {
     radio.read(&received_payload, len);
 
     //convert to String and print
-    String m = String(received_payload);
-    Serial.print(m.substring(0,len) + "\n\r");
-  
+    String message = String(received_payload);
+    Serial.println(message);
 }
 
 // ***Write to EEPROM***
-int eepromWrite(int startAddress, String string) {
+int eepromWrite(int startAddress, String string) 
+{
   int strLength = string.length() + 1;
   char charBuff[strLength];
   string.toCharArray(charBuff, strLength);
-  for(int i = startAddress; i <= strLength; i++) {
+  for(int i = startAddress; i <= strLength; i++) 
+  {
     EEPROM.write(i, charBuff[i]);
   }
   EEPROM.write(nameLengthAddr, strLength);
@@ -163,26 +155,30 @@ int eepromWrite(int startAddress, String string) {
 }
 
 // ***Read from EEPROM***
-String eepromRead(int startAddress, int strLength) {
+String eepromRead(int startAddress, int strLength) 
+{
   char charBuff[strLength];
-  for(int i = startAddress; i <= strLength; i++) {
+  for(int i = startAddress; i <= strLength; i++) 
+  {
     charBuff[i] = EEPROM.read(i);
   }
   return charBuff;  
 }
 
 // ***EEPROM Clear***
-void eepromClear(int startAddress, int strLength) 
+void eepromClear(int startAddress, int stopAddress) 
 {
-  for (int i = 0; i <= strLength; i++) {
+  for (int i = startAddress; i <= stopAddress; i++) 
+  {
      EEPROM.write(i, 0);
-   }
+  }
 }
 
 // ***Choose Power***
 void choosePower(int POWER)  //Select which power level to run the nRF24L01+ at
 {
-    if(POWER == 0) {
+    if(POWER == 0) 
+    {
       radio.setPALevel(RF24_PA_MIN);
     }else if(POWER == 1) {
       radio.setPALevel(RF24_PA_LOW);
@@ -190,32 +186,41 @@ void choosePower(int POWER)  //Select which power level to run the nRF24L01+ at
       radio.setPALevel(RF24_PA_HIGH);
     }else if(POWER == 3) {
       radio.setPALevel(RF24_PA_MAX);
+    }else {
+      radio.setPALevel(RF24_PA_MAX);
     }
 }
 
 // ***Set Data Rate***
 void setRate(int RATE) //Select data rate to jam specific communication protocols
 { 
-  if(RATE == 0) {
+  if (RATE == 0) 
+  {
     radio.setDataRate(RF24_250KBPS);
-  }else if(RATE == 1) {
+  }else if (RATE == 1) {
     radio.setDataRate(RF24_1MBPS);
-  }else if(RATE == 2) {
+  }else if (RATE == 2) {
     radio.setDataRate(RF24_2MBPS);
+  }else {
+    radio.setDataRate(RF24_1MBPS);
   }
 }
 
 // ***Set Channel Frequency***
 void setChannel(int CHANNEL) 
 {
-  radio.setChannel(CHANNEL);  
+  if (CHANNEL <= 127) 
+  {
+    radio.setChannel(CHANNEL);  
+  }else {
+    radio.setChannel(76);
+  }
 }
 
 // ***Get My Name to be Globally available***
-
-String getMyName(String myName)
+String getMyName(char myName[])
 {
-  String x = myName;
+  String x = String(myName);
   return x;
 }
 
