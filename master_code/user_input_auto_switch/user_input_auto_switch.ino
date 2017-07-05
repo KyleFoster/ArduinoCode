@@ -15,7 +15,6 @@ void setup(void) {
   Serial.begin(57600);
   printf_begin();
   radio.begin();
-  radio.setChannel(60);
   radio.enableDynamicPayloads();
   radio.setRetries(15,15);
   radio.startListening();
@@ -46,7 +45,10 @@ void sendMessage() {
   radio.openReadingPipe(1,pipes[1]);
   radio.stopListening();
   
-  radio.write(&send_payload, sizeof(send_payload));
+  bool send_it = false;
+  send_it = radio.write(&send_payload, sizeof(send_payload));
+  if (send_it)
+    Serial.println("Message sent successfully...");
   Serial.print("Me: " + message_string + "\n\r");
   
 }
