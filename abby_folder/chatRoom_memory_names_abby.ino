@@ -6,9 +6,9 @@
 #include <string.h>
 
 RF24 radio(9,10);
+
 const uint8_t pipes[2] = {0xE8, 0xD8};
 char send_payload[100] = "";
-char received_payload[100] = "";
 char names[10];
 
 int power, rate, channel;
@@ -20,10 +20,15 @@ int rateAddr = 13;
 int channelAddr = 14;
 String myName;
 
+struct addressBook{
+  String userName;
+  uint64_t address;
+} myAddresses[6]={{"Abby", 0xA1},{"Carlos", 0xB1},{"Kyle", 0xC1},{"Alex", 0xD1},{"Harman", 0xE1},{"Malik", 0xF1}}; 
+
 struct RadioHeader {
   uint8_t to_address;
   uint8_t from_address;
-} myHeader={pipes[0], pipes[1]};
+};
 
 void setup() {
 
@@ -36,8 +41,18 @@ void setup() {
   radio.setAutoAck(true);
 
   setupProfile();
+
+  for(int i=1; i<7; i++){
+    radio.openReadingPipe(i, myAddresses[i-1].address);
+  }
   
   radio.printDetails();
+  
+  //Print users in the network
+  for(int i=0; i<6; i++){
+     printf("%i) %s\n", i, myAddresses[i].userName.c_str());
+  }
+  
   Serial.println("---------------Begin Chat!---------------\n\r");
 }
 
@@ -49,22 +64,32 @@ void loop(void)
 // ***Send Message***
 void sendMessage() 
 {
+  char to_node[7];
+  memset(to_node, 0, 7);
   memset(send_payload, 0, 100);
+
+  Serial.readBytesUntil(';',to_node,7);
   Serial.readBytesUntil('\n',send_payload,100);
+  Serial.println(to_node);
+  Serial.println(send_payload);
+
+  
+  RadioHeader myHeader={pipes[0], pipes[1]};
 
   uint8_t totalMessage[102];
+  memset(totalMessage, 0, 102);
   totalMessage[0]=myHeader.to_address;
   totalMessage[1]=myHeader.from_address;
   totalMessage[2]='{';
 
   for(int i=3; i<102; i++){
-    totalMessage[i]=send_payload[i-3];
+    totalMessage[i]=send_payload[i-2];
     if(send_payload[i-3]=='\0'){
       totalMessage[i]='}';
       i=103;
     }
   }
- 
+
   radio.openWritingPipe(pipes[0]);
   radio.openReadingPipe(1,pipes[1]);
   radio.stopListening();
@@ -92,13 +117,10 @@ void receiveMessage()
       radio.startListening();
     }  
   }
-  
-    // wait until message is ready to be received 
-    // memset(received_payload, 0, 32);
-    int len = radio.getDynamicPayloadSize();
     
     RadioHeader receiveHeader={0, 0};
     uint8_t everything[102];
+    memset(everything, 0, 102);
 
     radio.read(&everything, sizeof(everything));
     receiveHeader={everything[0], everything[1]};
@@ -116,10 +138,18 @@ void receiveMessage()
       else if(everything[i]==125)
         i_second=i;
     }
-    //Print the message between the curly braces
-    for(int i=(i_first+1); i<(i_second); i++){
-      printf("%c", everything[i]);
+
+    //Compare Addresses
+    if(receiveHeader.to_address==pipes[0]){
+      //Print the message between the curly braces
+      for(int i=(i_first+1); i<(i_second); i++){
+        printf("%c", everything[i]);
+      }
+      printf("\n");
     }
+    else
+      printf("This message is not for you, forwarding message");
+    
 }
 
 // ***Write to EEPROM***
