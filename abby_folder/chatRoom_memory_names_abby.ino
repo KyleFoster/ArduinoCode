@@ -7,7 +7,6 @@
 
 RF24 radio(9,10);
 
-const uint8_t pipes[2] = {0xE8, 0xD8};
 char send_payload[100] = "";
 char names[10];
 
@@ -63,15 +62,12 @@ int sendMessage()
 
   Serial.readBytesUntil(';',to_node,7);
   Serial.readBytesUntil('\n',send_payload,100);
-  Serial.println(to_node);
-  Serial.println(send_payload);
 
   for(int i=0; i<6; i++){
     if(String(to_node)==myAddresses[i].userName){
       radio.openWritingPipe(myAddresses[i].address);
       myHeader={myAddresses[i].address, myAddresses[0].address};
       validAddress=true;
-      Serial.println(myAddresses[i].address, HEX);
       x=i;
     }
   }
@@ -86,8 +82,8 @@ int sendMessage()
   totalMessage[2]='{';
 
   for(int i=3; i<102; i++){
-    totalMessage[i]=send_payload[i-2];
-    if(send_payload[i-2]=='\0'){
+    totalMessage[i]=send_payload[i-3];
+    if(send_payload[i-3]=='\0'){
       totalMessage[i]='}';
       i=103;
     }
@@ -96,6 +92,8 @@ int sendMessage()
   radio.stopListening();
   radio.write(&totalMessage, sizeof(totalMessage));
   Serial.print(myName);
+  Serial.print(" -> ");
+  Serial.print(myAddresses[x].userName);
   Serial.print(": ");
   Serial.println(send_payload);
 
@@ -142,9 +140,17 @@ void receiveMessage()
         i_second=i;
     }
 
+    //Find who the message was from
+    int y=0;
+    for(int i=0; i<6; i++){
+      if(receiveHeader.from_address==myAddresses[i].address)
+        y=i;
+    }
+    
     //Compare Addresses
-    if(receiveHeader.to_address==pipes[0]){
+    if(receiveHeader.to_address==myAddresses[0].address){
       //Print the message between the curly braces
+      printf("%s: ", myAddresses[y].userName.c_str());
       for(int i=(i_first+1); i<(i_second); i++){
         printf("%c", everything[i]);
       }
