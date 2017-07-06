@@ -13,8 +13,7 @@ char received_payload[100] = "";
 char user_input[5] = "";
 bool search_channels = true;
 int channel = 0;
-
-char received_channel[5] = "";
+int receive_int = 150;
 
 
 
@@ -56,6 +55,10 @@ void loop(void)
 
 
 void findChannel() {
+  radio.openWritingPipe(pipes[1]);
+  radio.openReadingPipe(1,pipes[0]);
+  radio.startListening();
+  
   //Serial.println("searching for channels...");
   bool found_channel = false;
   int i = 127;
@@ -69,15 +72,20 @@ void findChannel() {
     if ( radio.testCarrier())
     {
       printf("Checking message on channel: %d \n\r", i);
-      if (radio.available())
+      //memset(received_channel, 0, sizeof(received_channel));
+      int start_time = millis();
+      int end_time = millis();
+      while (start_time + 2000 > end_time)
       {
-        memset(received_channel, 0, sizeof(received_channel));
-        radio.read(&received_channel, sizeof(received_channel));
-        String rc = String(received_channel);
-        channel = rc.toInt();
-        Serial.println("received channel: " + rc);
+        if (radio.available())
+        {
+          Serial.println("reading...");
+          radio.read(&receive_int, sizeof(receive_int));
+        }
+        end_time = millis();  
       }
-      if (channel == i)
+      printf("received int: %d\n\r", receive_int);
+      if (receive_int == i)
       {
         found_channel = true;
         Serial.println("channel is found...");
@@ -109,7 +117,7 @@ void receiveAutoAck() {
 
 
 void sendMessage() {
-  //Serial.println("sendMessage...");
+  Serial.println("sendMessage...");
   int num_of_chars = 0;
 
   //read in message from serial, press enter to send
@@ -125,8 +133,8 @@ void sendMessage() {
   radio.write(&send_payload, sizeof(send_payload));
   Serial.print("Me: " + message_string + "\n\r");
   
-  if (radio.isAckPayloadAvailable())
-    receiveAutoAck();   
+//  if (radio.isAckPayloadAvailable())
+//    receiveAutoAck();   
 }
 
 
@@ -159,11 +167,11 @@ void receiveMessage() {
     }  
   }
 
-  radio.openWritingPipe(pipes[0]);
-  radio.openReadingPipe(1,pipes[1]);
-  radio.stopListening();
-
-  radio.writeAckPayload(pipes[0], "1111", 5);
+//  radio.openWritingPipe(pipes[0]);
+//  radio.openReadingPipe(1,pipes[1]);
+//  radio.stopListening();
+//
+//  radio.writeAckPayload(pipes[0], "1111", 5);
 
   radio.openWritingPipe(pipes[1]);
   radio.openReadingPipe(1,pipes[0]);
@@ -178,8 +186,8 @@ void receiveMessage() {
   //convert to String and print
   String m = String(received_payload);
 
-  if (m != send_code || m != "11111")
-    Serial.print("Them: " + m.substring(0,len) + "\n\r");
+  //if (m != send_code || m != "11111")
+  Serial.print("Them: " + m.substring(0,len) + "\n\r");
 }
 
 
@@ -187,10 +195,11 @@ void broadcast() {
   radio.openWritingPipe(pipes[0]);
   radio.openReadingPipe(1,pipes[1]);
   radio.stopListening();
-  
-  radio.write(&send_code, sizeof(send_code));
-  if (radio.isAckPayloadAvailable())
-    receiveAutoAck();  
+
+  //memset(send_code, 0, 5);
+  radio.write(&channel, sizeof(channel));
+  //if (radio.isAckPayloadAvailable())
+    //receiveAutoAck();  
 }
 
 
