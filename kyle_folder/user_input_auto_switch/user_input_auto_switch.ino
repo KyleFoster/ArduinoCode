@@ -11,7 +11,7 @@ char received_payload[100] = "";
 
 void setup(void) {
   
-  Serial.begin(115200);
+  Serial.begin(57600);
   printf_begin();
   radio.begin();
   radio.enableDynamicPayloads();
