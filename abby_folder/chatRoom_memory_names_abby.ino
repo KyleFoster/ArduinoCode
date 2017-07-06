@@ -49,57 +49,6 @@ void loop(void)
   receiveMessage();
 }
 
-// ***Send Message***
-int sendMessage() 
-{
-  //Declare and Initialize Variables 
-  int x=0;
-  char to_node[7];
-  memset(to_node, 0, 7);
-  bool validAddress=false;
-  memset(send_payload, 0, 100);
-  RadioHeader myHeader;
-
-  Serial.readBytesUntil(';',to_node,7);
-  Serial.readBytesUntil('\n',send_payload,100);
-
-  for(int i=0; i<6; i++){
-    if(String(to_node)==myAddresses[i].userName){
-      radio.openWritingPipe(myAddresses[i].address);
-      myHeader={myAddresses[i].address, myAddresses[0].address};
-      validAddress=true;
-      x=i;
-    }
-  }
-  if(!validAddress){
-    Serial.println("Invalid transmit address.");
-  }
-  
-  uint8_t totalMessage[102];
-  memset(totalMessage, 0, 102);
-  totalMessage[0]=myHeader.to_address;
-  totalMessage[1]=myHeader.from_address;
-  totalMessage[2]='{';
-
-  for(int i=3; i<102; i++){
-    totalMessage[i]=send_payload[i-3];
-    if(send_payload[i-3]=='\0'){
-      totalMessage[i]='}';
-      i=103;
-    }
-  }
- 
-  radio.stopListening();
-  radio.write(&totalMessage, sizeof(totalMessage));
-  Serial.print(myName);
-  Serial.print(" -> ");
-  Serial.print(myAddresses[x].userName);
-  Serial.print(": ");
-  Serial.println(send_payload);
-
-  return x;
-}
-
 // ***Receive Message***
 void receiveMessage() 
 {
@@ -111,20 +60,19 @@ void receiveMessage()
   {
     if (Serial.available())
     {
-      x=sendMessage();
-      //Serial.println(x);
-      radio.openWritingPipe(myAddresses[x].address);
-     // radio.openReadingPipe(1,myAddresses[x].);
+      x=sendMessage(); //when the user enters a message, switch to TX mode and transmit message
+      radio.openWritingPipe(myAddresses[x].address); //open correct writing pipe for autoAcknowledge
       radio.startListening();
     }  
   }
     
-    RadioHeader receiveHeader={0, 0};
-    uint8_t everything[102];
-    memset(everything, 0, 102);
+    RadioHeader receiveHeader={0, 0}; //initialize a Header
+    uint8_t everything[102]; //int array that all data is read into
+    memset(everything, 0, 102); //initialize everything array
 
+    //Read in data from other radios
     radio.read(&everything, sizeof(everything));
-    receiveHeader={everything[0], everything[1]};
+    receiveHeader={everything[0], everything[1]}; //the first two integers that you recieve are the to_address and the from_address
     
     Serial.print(receiveHeader.to_address, HEX);
     Serial.print(receiveHeader.from_address, HEX);
@@ -157,8 +105,64 @@ void receiveMessage()
       printf("\n");
     }
     else
-      printf("This message is not for you, forwarding message");
+      printf("This message is not for you, forwarding message\n");
     
+}
+
+// ***Send Message***
+int sendMessage() 
+{
+  //Declare and Initialize Variables 
+  int x=0;
+  char to_node[7];
+  memset(to_node, 0, 7);
+  bool validAddress=false;
+  memset(send_payload, 0, 100);
+  RadioHeader myHeader;
+
+  //Read in User Input from Serial Monitor
+  Serial.readBytesUntil(';',to_node,7); //Name you want to send data to
+  Serial.readBytesUntil('\n',send_payload,100); //Message
+
+  for(int i=0; i<6; i++){ //Find the name in our Address book
+    if(String(to_node)==myAddresses[i].userName){
+      radio.openWritingPipe(myAddresses[i].address); //open correct writing pipe
+      myHeader={myAddresses[i].address, myAddresses[0].address}; //set the header
+      validAddress=true;
+      x=i; //position in address book of node we are sending data to
+    }
+  }
+  if(!validAddress){ //name was not in our Address Book 
+    Serial.println("Invalid transmit address.");
+  }
+
+  //Create a message with header{message}
+  uint8_t totalMessage[102];
+  memset(totalMessage, 0, 102);
+  totalMessage[0]=myHeader.to_address;
+  totalMessage[1]=myHeader.from_address;
+  totalMessage[2]='{';
+
+  for(int i=3; i<102; i++){
+    totalMessage[i]=send_payload[i-3];
+    if(send_payload[i-3]=='\0'){
+      totalMessage[i]='}';
+      i=103;
+    }
+  }
+
+  //Send message
+  radio.stopListening();
+  radio.write(&totalMessage, sizeof(totalMessage));
+
+  //Print what has been sent to the serial monitor
+  Serial.print(myName);
+  Serial.print(" -> ");
+  Serial.print(myAddresses[x].userName);
+  Serial.print(": ");
+  Serial.println(send_payload);
+
+  return x; //return position in address book to the receiveMessage() function 
 }
 
 // ***Write to EEPROM***
