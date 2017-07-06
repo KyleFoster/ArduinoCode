@@ -22,7 +22,7 @@ String myName;
 
 struct addressBook{
   String userName;
-  uint64_t address;
+  uint8_t address;
 } myAddresses[6]={{"Abby", 0xA1},{"Carlos", 0xB1},{"Kyle", 0xC1},{"Alex", 0xD1},{"Harman", 0xE1},{"Malik", 0xF1}}; 
 
 struct RadioHeader {
@@ -42,17 +42,6 @@ void setup() {
 
   setupProfile();
 
-  for(int i=1; i<7; i++){
-    radio.openReadingPipe(i, myAddresses[i-1].address);
-  }
-  
-  radio.printDetails();
-  
-  //Print users in the network
-  for(int i=0; i<6; i++){
-     printf("%i) %s\n", i, myAddresses[i].userName.c_str());
-  }
-  
   Serial.println("---------------Begin Chat!---------------\n\r");
 }
 
@@ -62,20 +51,34 @@ void loop(void)
 }
 
 // ***Send Message***
-void sendMessage() 
+int sendMessage() 
 {
+  //Declare and Initialize Variables 
+  int x=0;
   char to_node[7];
   memset(to_node, 0, 7);
+  bool validAddress=false;
   memset(send_payload, 0, 100);
+  RadioHeader myHeader;
 
   Serial.readBytesUntil(';',to_node,7);
   Serial.readBytesUntil('\n',send_payload,100);
   Serial.println(to_node);
   Serial.println(send_payload);
 
+  for(int i=0; i<6; i++){
+    if(String(to_node)==myAddresses[i].userName){
+      radio.openWritingPipe(myAddresses[i].address);
+      myHeader={myAddresses[i].address, myAddresses[0].address};
+      validAddress=true;
+      Serial.println(myAddresses[i].address, HEX);
+      x=i;
+    }
+  }
+  if(!validAddress){
+    Serial.println("Invalid transmit address.");
+  }
   
-  RadioHeader myHeader={pipes[0], pipes[1]};
-
   uint8_t totalMessage[102];
   memset(totalMessage, 0, 102);
   totalMessage[0]=myHeader.to_address;
@@ -84,36 +87,36 @@ void sendMessage()
 
   for(int i=3; i<102; i++){
     totalMessage[i]=send_payload[i-2];
-    if(send_payload[i-3]=='\0'){
+    if(send_payload[i-2]=='\0'){
       totalMessage[i]='}';
       i=103;
     }
   }
-
-  radio.openWritingPipe(pipes[0]);
-  radio.openReadingPipe(1,pipes[1]);
+ 
   radio.stopListening();
-
   radio.write(&totalMessage, sizeof(totalMessage));
-  //radio.write(&myHeader, sizeof(myHeader));
-  //radio.write(&send_payload, sizeof(send_payload));
-  //Serial.print(myHeader.from_address, HEX);
   Serial.print(myName);
   Serial.print(": ");
   Serial.println(send_payload);
+
+  return x;
 }
 
 // ***Receive Message***
 void receiveMessage() 
 {
+  //Declare and Initialize Variables
+  int x=0;
+  
   // wait until there is a message to receive
   while (!radio.available()) 
   {
     if (Serial.available())
     {
-      sendMessage();
-      radio.openWritingPipe(pipes[1]);
-      radio.openReadingPipe(1,pipes[0]);
+      x=sendMessage();
+      //Serial.println(x);
+      radio.openWritingPipe(myAddresses[x].address);
+     // radio.openReadingPipe(1,myAddresses[x].);
       radio.startListening();
     }  
   }
@@ -246,8 +249,9 @@ void setupProfile()
     names[i] = EEPROM.read(i);
   }
   myName = getMyName(names);
-  Serial.print("This Arduino belongs to " + myName + ".\n\r");
-  Serial.print("Load " + myName + "'s profile? Type 'Y' for Yes or any key to create a new profile.\n\r");
+  Serial.println("Type 'Y' to load " + myName + "'s profile."); 
+  Serial.println("Type 'YD' to load " + myName + "'s profile and print diagnostics.");
+  Serial.println("Type any other key(s) to create a new profile.");
   Serial.flush();
   while(!Serial.available());
   String load = Serial.readString();
@@ -261,7 +265,17 @@ void setupProfile()
     channel = EEPROM.read(channelAddr);
       setChannel(channel);
   }
-  else 
+  else if (load == "YD")
+  {
+    power = EEPROM.read(powerAddr); //Recall saved parameters and skip setup dialogs
+      choosePower(power);
+    rate = EEPROM.read(rateAddr);
+      setRate(rate);
+    channel = EEPROM.read(channelAddr);
+      setChannel(channel);
+    radio.printDetails();
+  }
+  else
   {
     Serial.print("Enter a new name. Max 10 characters: ");
     Serial.flush();
@@ -298,7 +312,16 @@ void setupProfile()
     EEPROM.write(channelAddr, channel);
 
     myName = eepromRead(nameBegin, nameLength);
+    radio.printDetails();
   }
+  for(int i=1; i<7; i++){
+    radio.openReadingPipe(i, myAddresses[i-1].address);
+  }
+ Serial.println("Address Book:\n\r");
+  for(int i=0; i<6; i++){
+     printf("%i) %s\n", i, myAddresses[i].userName.c_str());
+  }
+ Serial.println("\n\rType user name, semicolon, then message. eg: 'Kyle;You are garbage at chess.'");
 }
 
 
