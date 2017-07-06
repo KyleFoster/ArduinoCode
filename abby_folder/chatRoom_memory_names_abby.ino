@@ -20,6 +20,11 @@ int rateAddr = 13;
 int channelAddr = 14;
 String myName;
 
+struct addressBook{
+  String userName;
+  uint64_t address;
+} myAddresses[6]={{"Abby", 0xA1},{"Carlos", 0xB1},{"Kyle", 0xC1},{"Alex", 0xD1},{"Harman", 0xE1},{"Malik", 0xF1}}; 
+
 struct RadioHeader {
   uint8_t to_address;
   uint8_t from_address;
@@ -36,8 +41,18 @@ void setup() {
   radio.setAutoAck(true);
 
   setupProfile();
+
+  for(int i=1; i<7; i++){
+    radio.openReadingPipe(i, myAddresses[i-1].address);
+  }
   
   radio.printDetails();
+  
+  //Print users in the network
+  for(int i=0; i<6; i++){
+     printf("%i) %s\n", i, myAddresses[i].userName.c_str());
+  }
+  
   Serial.println("---------------Begin Chat!---------------\n\r");
 }
 
@@ -49,8 +64,16 @@ void loop(void)
 // ***Send Message***
 void sendMessage() 
 {
+  char to_node[7];
+  memset(to_node, 0, 7);
   memset(send_payload, 0, 100);
+
+  Serial.readBytesUntil(';',to_node,7);
   Serial.readBytesUntil('\n',send_payload,100);
+  Serial.println(to_node);
+  Serial.println(send_payload);
+
+  
   RadioHeader myHeader={pipes[0], pipes[1]};
 
   uint8_t totalMessage[102];
@@ -60,13 +83,13 @@ void sendMessage()
   totalMessage[2]='{';
 
   for(int i=3; i<102; i++){
-    totalMessage[i]=send_payload[i-3];
+    totalMessage[i]=send_payload[i-2];
     if(send_payload[i-3]=='\0'){
       totalMessage[i]='}';
       i=103;
     }
   }
- 
+
   radio.openWritingPipe(pipes[0]);
   radio.openReadingPipe(1,pipes[1]);
   radio.stopListening();
