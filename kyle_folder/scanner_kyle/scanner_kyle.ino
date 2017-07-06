@@ -53,22 +53,26 @@ void loop(void)
 
 
 void findChannel() {
-  Serial.println("searching for channels...");
+  //Serial.println("searching for channels...");
   bool found_channel = false;
   int i = 127;
   
   while (!found_channel)
   {
     radio.setChannel(i);
-    //broadcast();
-    //Serial.println("On channel: " + i);
+    radio.startListening();
+    delayMicroseconds(128);
+    radio.stopListening();
     if ( radio.testCarrier())
     {
       printf("Sending message on channel: %d \n\r", i);
       sendCode();
       receiveAutoAck();
       if (checkCode())
+      {
         found_channel = true;
+        Serial.println("channel is found...");
+      }
       else
         Serial.println("Failed to authenticate");
     }
@@ -81,7 +85,7 @@ void findChannel() {
 
 // ***Send Message***
 void sendCode() {
-  Serial.println("sendCode...");
+  //Serial.println("sendCode...");
   radio.openWritingPipe(pipes[0]);
   radio.openReadingPipe(1,pipes[1]);
   radio.stopListening();
@@ -91,7 +95,7 @@ void sendCode() {
 
 
 void receiveAutoAck() {
-  Serial.println("receiveAutoAck...");
+  //Serial.println("receiveAutoAck...");
   radio.openWritingPipe(pipes[1]);
   radio.openReadingPipe(1,pipes[0]);
   radio.startListening();
@@ -101,22 +105,28 @@ void receiveAutoAck() {
     
   // Receive the message
   radio.read(&ack, len);
+  String ack1 = String(ack);
+  //Serial.println("auto ack: " + ack1);
 }
 
 
 bool checkCode() {
-  Serial.println("checkCode...");
+  //Serial.println("checkCode...");
   bool correct_code = false;
   String code = String(ack);
+  Serial.println("code: " + code);
   
-  if (code == "1010")
+  if (code == "11111")
+  {
+    Serial.println("Code is correct");
     correct_code = true;
+  }
   return correct_code;
 }
 
 
 void sendMessage() {
-  Serial.println("sendMessage...");
+  //Serial.println("sendMessage...");
   int num_of_chars = 0;
 
   //read in message from serial, press enter to send
@@ -139,7 +149,7 @@ void sendMessage() {
 
 // ***Receive Message***
 void receiveMessage() { 
-  Serial.println("receiveMessage...");
+  //Serial.println("receiveMessage...");
   int broadcast_time = millis();
   
   // wait until there is a message to receive
@@ -148,11 +158,13 @@ void receiveMessage() {
     //Broadcast a message for other radios to pick up every 2 seconds for 2 seconds 
     if (broadcast_time % 4000 > 2000)
     {
+      //Serial.println("broadcasting...");
       broadcast();
       radio.openWritingPipe(pipes[1]);
       radio.openReadingPipe(1,pipes[0]);
       radio.startListening();
     }
+    broadcast_time = millis();
   
     //check if the user wants to switch role while waiting for a message
     if (Serial.available())
@@ -168,7 +180,7 @@ void receiveMessage() {
   radio.openReadingPipe(1,pipes[1]);
   radio.stopListening();
 
-  radio.writeAckPayload(pipes[0], "1010", 5);
+  radio.writeAckPayload(pipes[0], "1111", 5);
 
   radio.openWritingPipe(pipes[1]);
   radio.openReadingPipe(1,pipes[0]);
@@ -183,7 +195,7 @@ void receiveMessage() {
   //convert to String and print
   String m = String(received_payload);
 
-  if (m != "1234")
+  if (m != "1234" || m != "11111")
     Serial.print("Them: " + m.substring(0,len) + "\n\r");
 }
 
