@@ -6,9 +6,9 @@
 #include <string.h>
 
 RF24 radio(9,10);
+
 const uint8_t pipes[2] = {0xE8, 0xD8};
 char send_payload[100] = "";
-char received_payload[100] = "";
 char names[10];
 
 int power, rate, channel;
@@ -23,7 +23,7 @@ String myName;
 struct RadioHeader {
   uint8_t to_address;
   uint8_t from_address;
-} myHeader={pipes[0], pipes[1]};
+};
 
 void setup() {
 
@@ -51,8 +51,10 @@ void sendMessage()
 {
   memset(send_payload, 0, 100);
   Serial.readBytesUntil('\n',send_payload,100);
+  RadioHeader myHeader={pipes[0], pipes[1]};
 
   uint8_t totalMessage[102];
+  memset(totalMessage, 0, 102);
   totalMessage[0]=myHeader.to_address;
   totalMessage[1]=myHeader.from_address;
   totalMessage[2]='{';
@@ -92,13 +94,10 @@ void receiveMessage()
       radio.startListening();
     }  
   }
-  
-    // wait until message is ready to be received 
-    // memset(received_payload, 0, 32);
-    int len = radio.getDynamicPayloadSize();
     
     RadioHeader receiveHeader={0, 0};
     uint8_t everything[102];
+    memset(everything, 0, 102);
 
     radio.read(&everything, sizeof(everything));
     receiveHeader={everything[0], everything[1]};
@@ -116,10 +115,18 @@ void receiveMessage()
       else if(everything[i]==125)
         i_second=i;
     }
-    //Print the message between the curly braces
-    for(int i=(i_first+1); i<(i_second); i++){
-      printf("%c", everything[i]);
+
+    //Compare Addresses
+    if(receiveHeader.to_address==pipes[0]){
+      //Print the message between the curly braces
+      for(int i=(i_first+1); i<(i_second); i++){
+        printf("%c", everything[i]);
+      }
+      printf("\n");
     }
+    else
+      printf("This message is not for you, forwarding message");
+    
 }
 
 // ***Write to EEPROM***
