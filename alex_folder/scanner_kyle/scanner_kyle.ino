@@ -71,7 +71,11 @@ void findChannel() {
       if (checkCode())
       {
         found_channel = true;
+<<<<<<< HEAD
+        Serial.println("Channel is found");
+=======
         Serial.println("channel is found...");
+>>>>>>> d1b16aa18a829b51d24a9ab6baf0f70b837aa7c5
       }
       else
         Serial.println("Failed to authenticate");
@@ -106,7 +110,11 @@ void receiveAutoAck() {
   // Receive the message
   radio.read(&ack, len);
   String ack1 = String(ack);
+<<<<<<< HEAD
+  //Serial.println("Auto ack: " + ack1);
+=======
   //Serial.println("auto ack: " + ack1);
+>>>>>>> d1b16aa18a829b51d24a9ab6baf0f70b837aa7c5
 }
 
 
@@ -115,13 +123,21 @@ bool checkCode() {
   bool correct_code = false;
   String code = String(ack);
   Serial.println("code: " + code);
+<<<<<<< HEAD
+
+=======
   
+>>>>>>> d1b16aa18a829b51d24a9ab6baf0f70b837aa7c5
   if (code == "11111")
   {
     Serial.println("Code is correct");
     correct_code = true;
   }
+<<<<<<< HEAD
+    return correct_code;
+=======
   return correct_code;
+>>>>>>> d1b16aa18a829b51d24a9ab6baf0f70b837aa7c5
 }
 
 
