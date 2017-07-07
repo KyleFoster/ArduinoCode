@@ -17,7 +17,7 @@ bool radioNumber = 0;
 RF24 radio(9,10);
 /**********************************************************/
 
-RF24::addressBook myAddresses[6]={{"Abby", 0xF0F0F0F0A1LL},{"Carlos", 0xF0F0F0F0B1LL},{"Kyle", 0xF0F0F0F0C1LL},{"Alex", 0xF0F0F0F0D1LL},{"Harman", 0xF0F0F0F0E1LL},{"Malik", 0xF0F0F0F0F1LL}};
+RF24::addressBook myAddresses[6]={{"Carlos", 0xF0F0F0F0B1LL},{"Abby", 0xF0F0F0F0A1LL},{"Kyle", 0xF0F0F0F0C1LL},{"Alex", 0xF0F0F0F0D1LL},{"Harman", 0xF0F0F0F0E1LL},{"Malik", 0xF0F0F0F0F1LL}};
 RF24::Header myHeader={myAddresses[1].address, myAddresses[2].address};
 
 void setup() {
@@ -42,34 +42,47 @@ void setup() {
 }
 
 void loop() {
-  //Declare and Initialize Variables
-  int to_node;
 
-/*** Get Node to Send Data to ***/
-  //Print users in the network
-  for(int i=0; i<6; i++){
-     printf("%i) %s\n", i, myAddresses[i].userName.c_str());
-  }
-  Serial.println("Please enter the number of the person you would like to send data to: ");
+ unsigned long got_time;
+    
+                                                                    // Variable for the received timestamp
+      while (radio.available()) {                                   // While there is data ready
+        radio.read( &got_time, sizeof(unsigned long) );             // Get the payload
+      }
 
-  //Get Node user wants to sent data to
-  bool done=false; 
-  while(Serial.available()==0){
-    //wait for user input
-  }
-  to_node=Serial.parseInt();
-  //scanf("%i", &to_node);
-  printf("You picked: %i) %s\n", to_node, myAddresses[to_node].userName.c_str());
+      Serial.println(got_time);
 
-/** Send Data to a specific node ***/
-  radio.stopListening(); //stop listening for input
-  radio.openWritingPipe(myAddresses[to_node].address);
-  Serial.println("Now Sending");
-  unsigned long start_time = micros();  
-  done=false;
-  while(!done){
-    done=radio.write(&start_time, sizeof(unsigned long), 0, myHeader);
-  }
+
+
+  
+//  //Declare and Initialize Variables
+//  int to_node;
+//
+///*** Get Node to Send Data to ***/
+//  //Print users in the network
+//  for(int i=0; i<6; i++){
+//     printf("%i) %s\n", i, myAddresses[i].userName.c_str());
+//  }
+//  Serial.println("Please enter the number of the person you would like to send data to: ");
+//
+//  //Get Node user wants to sent data to
+//  bool done=false; 
+//  while(Serial.available()==0){
+//    //wait for user input
+//  }
+//  to_node=Serial.parseInt();
+//  //scanf("%i", &to_node);
+//  printf("You picked: %i) %s\n", to_node, myAddresses[to_node].userName.c_str());
+//
+///** Send Data to a specific node ***/
+//  radio.stopListening(); //stop listening for input
+//  radio.openWritingPipe(myAddresses[to_node].address);
+//  Serial.println("Now Sending");
+//  unsigned long start_time = micros();  
+//  done=false;
+//  while(!done){
+//    done=radio.write(&start_time, sizeof(unsigned long), 0, myHeader);
+//  }
   
   /*
 
