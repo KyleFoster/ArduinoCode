@@ -66,20 +66,11 @@ int sendMessage()
   for(int i = 0; i < 6; i++){
     if (String(to_node) == myAddresses[i].userName)
     {
-      if (i == 4)
-      {
-        radio.openWritingPipe(myAddresses[0].address);
-        myHeader={myAddresses[i].address, myAddresses[1].address};
-        validAddress = true;
-        x = i;
-      }
-      else 
-      {
+      
         radio.openWritingPipe(myAddresses[i].address);
         myHeader={myAddresses[i].address, myAddresses[1].address};
         validAddress = true;
         x = i;
-      }
     }
   }
   
@@ -168,7 +159,7 @@ void receiveMessage()
       printf("\n");
     }
     else {
-      printf("This message is for %s, forwarding message\n", myAddresses[x].userName.c_str());
+      //printf("This message is for %s, forwarding message\n", myAddresses[x].userName.c_str());
       radio.stopListening();
       radio.openWritingPipe(receiveHeader.to_address);
       radio.write(&everything, sizeof(everything));
@@ -277,9 +268,12 @@ void setupProfile()
     names[i] = EEPROM.read(i);
   }
   myName = getMyName(names);
+  delay(750);
+  Serial.println("*******************************************************************");
   Serial.println("- Type 'Y' to load " + myName + "'s profile."); 
   Serial.println("- Type 'YD' to load " + myName + "'s profile and print diagnostics.");
   Serial.println("- Type any other key(s) to create a new profile.");
+  Serial.println("*******************************************************************");
   Serial.flush();
   while(!Serial.available());
   String load = Serial.readString();
