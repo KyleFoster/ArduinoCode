@@ -167,9 +167,12 @@ void receiveMessage()
       }
       printf("\n");
     }
-    else
-      printf("This message is not for you, forwarding message...\n\r");
-    
+    else {
+      printf("This message is for %s, forwarding message\n", myAddresses[x].userName.c_str());
+      radio.stopListening();
+      radio.openWritingPipe(receiveHeader.to_address);
+      radio.write(&everything, sizeof(everything));
+    }    
 }
 
 // ***Write to EEPROM***
