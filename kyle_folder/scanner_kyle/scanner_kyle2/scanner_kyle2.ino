@@ -13,7 +13,7 @@ char received_payload[100] = "";
 char user_input[5] = "";
 bool search_channels = true;
 int channel = 0;
-int receive_int = 150;
+uint8_t receive_int = 150;
 
 
 
@@ -75,11 +75,14 @@ void findChannel() {
       //memset(received_channel, 0, sizeof(received_channel));
       int start_time = millis();
       int end_time = millis();
+      radio.openWritingPipe(pipes[1]);
+      radio.openReadingPipe(1,pipes[0]);
+      radio.startListening();
       while (start_time + 2000 > end_time)
       {
         if (radio.available())
         {
-          Serial.println("reading...");
+          //Serial.println("reading...");
           radio.read(&receive_int, sizeof(receive_int));
         }
         end_time = millis();  
