@@ -63,10 +63,10 @@ int sendMessage()
   Serial.readBytesUntil(';',to_node,7);  
   Serial.readBytesUntil('\n',send_payload,100);
 
-  for(int i = 0; i < 6; i++){
+  for(int i = 0; i < 6; i++)
+  {
     if (String(to_node) == myAddresses[i].userName)
     {
-      
         radio.openWritingPipe(myAddresses[i].address);
         myHeader={myAddresses[i].address, myAddresses[1].address};
         validAddress = true;
@@ -74,7 +74,8 @@ int sendMessage()
     }
   }
   
-  if(!validAddress){
+  if(!validAddress)
+  {
     Serial.println("Invalid transmit address.\n\r");
   }
   
@@ -108,7 +109,7 @@ int sendMessage()
 void receiveMessage() 
 {
   //Declare and Initialize Variables
-  int x=0;
+  int x = 0;
   
   // wait until there is a message to receive
   while (!radio.available()) 
@@ -159,10 +160,11 @@ void receiveMessage()
       printf("\n");
     }
     else {
-      //printf("This message is for %s, forwarding message\n", myAddresses[x].userName.c_str());
-      radio.stopListening();
-      radio.openWritingPipe(receiveHeader.to_address);
-      radio.write(&everything, sizeof(everything));
+//      //printf("This message is for %s, forwarding message\n", myAddresses[x].userName.c_str());
+//      radio.stopListening();
+//      radio.openWritingPipe(receiveHeader.to_address);
+//      radio.write(&everything, sizeof(everything));
+        printf("This message is not for you, forwarding message");
     }    
 }
 
