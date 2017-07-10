@@ -21,6 +21,7 @@ struct addressBook{
 struct RadioHeader {
   uint8_t to_address;
   uint8_t from_address;
+  char message_type;
 };
 
 //Function Prototypes
@@ -39,15 +40,18 @@ struct RadioHeader {
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(9600);
+  Serial.begin(1000000);
   printf_begin();
   radio.begin();
-  radio.setRetries(15,15);
+  radio.enableDynamicPayloads();
+  radio.setRetries(15, 15);
+  radio.setAutoAck(true);
 
   //Additional Setup up code that ultimately should be put in Carlos's Setup Code
   for(int i = 1; i < 7; i++){ // Open all writing pipes
     radio.openReadingPipe(i, myAddresses[i - 1].address);
   }
+  radio.startListening();
 
   Serial.println(F("Address Book:\n\r")); // Print out contact list
   for(int i = 0; i < 6; i++){
@@ -107,17 +111,18 @@ void receiveMessage()
     }  
    }  
     
-    RadioHeader receiveHeader={0, 0};
+    RadioHeader receiveHeader={0, 0, '\0'};
     uint8_t everything[102];
     memset(everything, 0, 102);
 
     radio.read(&everything, sizeof(everything));
-    receiveHeader={everything[0], everything[1]};
+    receiveHeader={everything[0], everything[1], everything[2]};
     
     Serial.print(receiveHeader.to_address, HEX);
     Serial.print(receiveHeader.from_address, HEX);
     Serial.print("\n"); 
 
+/*
     // Find Curly Braces
     int i_first = 0;
     int i_second = 0;
@@ -127,6 +132,7 @@ void receiveMessage()
       else if(everything[i] == 125)
         i_second = i;
     }
+*/
 
     //Find who the message was from
     int y = 0;
@@ -137,15 +143,24 @@ void receiveMessage()
     
     //Compare Addresses
     if(receiveHeader.to_address == myAddresses[0].address){
-      //Print the message between the curly braces
-      printf("%s: ", myAddresses[y].userName.c_str());
-      for(int i = (i_first+1); i < (i_second); i++){
-        printf("%c", everything[i]);
+      if(receiveHeader.message_type=='M'){
+        //Print the message between the curly braces
+        printf("%s: ", myAddresses[y].userName.c_str());
+        for(int i = 3; i < 102; i++){
+          printf("%c", everything[i]);
+        }
+        printf("\n");
       }
-      printf("\n");
+      else if(receiveHeader.message_type=='A'){
+        printf("%s has received your message\n", myAddresses[y].userName.c_str());
+      }
+      else if(receiveHeader.message_type=='B'){
+        //Discard Broadcast Message
+      }
     }
     else {
-      Serial.println(F("Forwarding Message"));
+      radio.openWritingPipe(x);
+      radio.write(&everything, sizeof(everything));
     }    
 }
 
@@ -157,17 +172,17 @@ int sendMessage(int to_node_index)
 //  char to_node[7];
  // memset(to_node, 0, 7);
   bool messageSuccess=false;
-  char send_payload[20] = "";
-  memset(send_payload, 0, 20);
+  char send_payload[100] = "";
+  memset(send_payload, 0, 100);
   RadioHeader myHeader;
 
 //  Serial.readBytesUntil(';',to_node,7);  
-  Serial.readBytesUntil('\n',send_payload,20);
+  Serial.readBytesUntil('\n',send_payload,100);
   Serial.println(send_payload);
 
   //Open Writing Pipe
   radio.openWritingPipe(myAddresses[to_node_index].address);
-  myHeader={myAddresses[to_node_index].address, myAddresses[my_node_index].address};
+  myHeader={myAddresses[to_node_index].address, myAddresses[my_node_index].address, 'M'};
 
 //  for(int i = 0; i < 6; i++)
 //  {
@@ -189,15 +204,10 @@ int sendMessage(int to_node_index)
   memset(totalMessage, 0, 102);
   totalMessage[0] = myHeader.to_address;
   totalMessage[1] = myHeader.from_address;
-  totalMessage[2] = '{';
+  totalMessage[2] = myHeader.message_type;
 
   for(int i = 3; i < 102; i++){
     totalMessage[i] = send_payload[i - 3];
-    if(send_payload[i - 3] == '\0')
-    {
-      totalMessage[i] = '}';
-      i = 103;
-    }
   }
  
   radio.stopListening();
@@ -210,4 +220,5 @@ int sendMessage(int to_node_index)
 
   return messageSuccess;
 }
+
 
