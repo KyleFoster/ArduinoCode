@@ -128,18 +128,6 @@ void receiveMessage()
     Serial.print(receiveHeader.from_address, HEX);
     Serial.print("\n"); 
 
-/*
-    // Find Curly Braces
-    int i_first = 0;
-    int i_second = 0;
-    for(int i = 0; i < 100; i++){
-      if(everything[i] == 123)
-        i_first = i;
-      else if(everything[i] == 125)
-        i_second = i;
-    }
-*/
-
     //Find who the message was from
     int y = 0;
     for(int i = 0; i < 6; i++){
@@ -150,12 +138,19 @@ void receiveMessage()
     //Compare Addresses
     if(receiveHeader.to_address == myAddresses[my_node_index].address){
       if(receiveHeader.message_type=='M'){
-        //Print the message between the curly braces
+        //Print the message \
         printf("%s: ", myAddresses[y].userName.c_str());
         for(int i = 3; i < 102; i++){
           printf("%c", everything[i]);
         }
         printf("\n");
+        //Return a success message
+        RadioHeader returnHeader;
+        returnHeader={receiveHeader.from_address, receiveHeader.to_address, 'A'};
+        radio.openWritingPipe(receiveHeader.from_address); 
+        radio.stopListening();
+        radio.write(&receiveHeader, sizeof(receiveHeader));
+        radio.startListening();
       }
       else if(receiveHeader.message_type=='A'){
         printf("%s has received your message\n", myAddresses[y].userName.c_str());
@@ -165,8 +160,10 @@ void receiveMessage()
       }
     }
     else {
+      radio.stopListening();
       radio.openWritingPipe(x);
       radio.write(&everything, sizeof(everything));
+      radio.startListening();
     }    
 }
 
@@ -175,9 +172,6 @@ int sendMessage(int to_node_index)
 {
   printf("entered sendMessage function\n");
   //Declare and Initialize Variables 
-//  int x = 0;
-//  char to_node[7];
- // memset(to_node, 0, 7);
   bool messageSuccess=false;
   char send_payload[100] = "";
   memset(send_payload, 0, 100);
@@ -190,28 +184,13 @@ int sendMessage(int to_node_index)
   //Open Writing Pipe
   radio.openWritingPipe(myAddresses[to_node_index].address);
   myHeader={myAddresses[to_node_index].address, myAddresses[my_node_index].address, 'M'};
-
-//  for(int i = 0; i < 6; i++)
-//  {
-//    if (String(to_node) == myAddresses[i].userName)
-//    {
-//        radio.openWritingPipe(myAddresses[i].address);
-//        myHeader={myAddresses[i].address, myAddresses[1].address};
-//        validAddress = true;
-//        x = i;
-//    }
-//  }
-//  
-//  if(!validAddress)
-//  {
-//    Serial.println("Invalid transmit address.\n\r");
-//  }
   
   uint8_t totalMessage[102];
   memset(totalMessage, 0, 102);
   totalMessage[0] = myHeader.to_address;
   totalMessage[1] = myHeader.from_address;
   totalMessage[2] = myHeader.message_type;
+  Serial.println(myHeader.message_type);
 
   for(int i = 3; i < 102; i++){
     totalMessage[i] = send_payload[i - 3];
@@ -224,6 +203,7 @@ int sendMessage(int to_node_index)
   Serial.print(myAddresses[to_node_index].userName);
   Serial.print(": ");
   Serial.println(send_payload);
+  radio.startListening();
 
   return messageSuccess;
 }
