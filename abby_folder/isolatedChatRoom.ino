@@ -63,11 +63,13 @@ void setup() {
 }
 
 void loop() {
+  printf("entered loop function\n");
   receiveMessage();
-
+  
 }
 
 int readUserInput(){
+  printf("entered readUserInput function\n");
   //Declare and Initialize Variables
   int to_node_index;
   char prefix[7];
@@ -86,6 +88,8 @@ int readUserInput(){
       if(String(prefix)==myAddresses[i].userName){
         to_node_index=i;
         sendMessage(i);
+        printf("returned to readUserInput\n");
+        i=7;
       }
     }
   }
@@ -95,6 +99,7 @@ int readUserInput(){
 // ***Receive Message***
 void receiveMessage() 
 {
+  printf("entered receiveMessage function\n");
   //Declare and Initialize Variables
   int x;
   
@@ -104,6 +109,7 @@ void receiveMessage()
     if (Serial.available())
     {
         x=readUserInput();
+        printf("returned to receiveMessage\n");
         if(x<6){
           radio.openWritingPipe(myAddresses[x].address);
           radio.startListening();
@@ -142,7 +148,7 @@ void receiveMessage()
     }
     
     //Compare Addresses
-    if(receiveHeader.to_address == myAddresses[0].address){
+    if(receiveHeader.to_address == myAddresses[my_node_index].address){
       if(receiveHeader.message_type=='M'){
         //Print the message between the curly braces
         printf("%s: ", myAddresses[y].userName.c_str());
@@ -167,6 +173,7 @@ void receiveMessage()
 // ***Send Message***
 int sendMessage(int to_node_index) 
 {
+  printf("entered sendMessage function\n");
   //Declare and Initialize Variables 
 //  int x = 0;
 //  char to_node[7];
