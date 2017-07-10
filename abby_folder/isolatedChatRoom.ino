@@ -59,12 +59,12 @@ void setup() {
   }
   Serial.println(F("\n\r- To Send a message:"));
   Serial.println(F("Type user name, semicolon, then message.\n\reg: 'Alex;You are equally as garbage at chess.'"));
+  Serial.println(F("------------Begin Chat-------------");
 
 }
 
 void loop() {
-  receiveMessage();
-  
+  receiveMessage(); 
 }
 
 int readUserInput(){
@@ -86,7 +86,7 @@ int readUserInput(){
       if(String(prefix)==myAddresses[i].userName){
         to_node_index=i;
         sendMessage(i);
-        printf("returned to readUserInput\n");
+        //printf("returned to readUserInput\n");
         i=7;
       }
     }
@@ -97,7 +97,7 @@ int readUserInput(){
 // ***Receive Message***
 void receiveMessage() 
 {
-  printf("entered receiveMessage function\n");
+//  printf("entered receiveMessage function\n");
   //Declare and Initialize Variables
   int x;
   
@@ -107,7 +107,7 @@ void receiveMessage()
     if (Serial.available())
     {
         x=readUserInput();
-        printf("returned to receiveMessage\n");
+        //printf("returned to receiveMessage\n");
         if(x<6){
           radio.openWritingPipe(myAddresses[x].address);
           radio.startListening();
@@ -121,11 +121,11 @@ void receiveMessage()
 
     radio.read(&everything, sizeof(everything));
     receiveHeader={everything[0], everything[1], everything[2]};
-    printf("%c", receiveHeader.message_type);
+    //printf("%c", receiveHeader.message_type);
     
-    Serial.print(receiveHeader.to_address, HEX);
-    Serial.print(receiveHeader.from_address, HEX);
-    Serial.print("\n"); 
+    //Serial.print(receiveHeader.to_address, HEX);
+    //Serial.print(receiveHeader.from_address, HEX);
+    //Serial.print("\n"); 
 
     //Find who the message is to
     for(int i=0; i<6; i++){
@@ -149,6 +149,7 @@ void receiveMessage()
           printf("%c", everything[i]);
         }
         printf("\n");
+        delay(1000);
         //Return a success message
         uint8_t returnMessage[3];
         returnMessage[0]=myAddresses[y].address;
@@ -190,7 +191,7 @@ void receiveMessage()
 // ***Send Message***
 int sendMessage(int to_node_index) 
 {
-  printf("entered sendMessage function\n");
+//  printf("entered sendMessage function\n");
   //Declare and Initialize Variables 
   bool messageSuccess=false;
   char send_payload[100] = "";
@@ -199,7 +200,7 @@ int sendMessage(int to_node_index)
 
 //  Serial.readBytesUntil(';',to_node,7);  
   Serial.readBytesUntil('\n',send_payload,100);
-  Serial.println(send_payload);
+//  Serial.println(send_payload);
 
   //Open Writing Pipe
   radio.openWritingPipe(myAddresses[to_node_index].address);
@@ -210,7 +211,7 @@ int sendMessage(int to_node_index)
   totalMessage[0] = myHeader.to_address;
   totalMessage[1] = myHeader.from_address;
   totalMessage[2] = myHeader.message_type;
-  Serial.println(myHeader.message_type);
+// Serial.println(myHeader.message_type);
 
   for(int i = 3; i < 102; i++){
     totalMessage[i] = send_payload[i - 3];
