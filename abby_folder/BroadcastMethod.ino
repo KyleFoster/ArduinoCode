@@ -120,6 +120,7 @@ void receiveMessage()
       if(start_time % 5000>4990){
         radio.stopListening();
         radio.write(&broadcastMessage, sizeof(broadcastMessage)); //Broadcast message to update connections
+        radio.startListening();
       }
       start_time=millis();
     }
@@ -130,10 +131,12 @@ void receiveMessage()
     memset(everything, 0, 102);
     radio.read(&everything, sizeof(everything));
     receiveHeader={everything[0], everything[1], everything[2]};
-    
-    //Serial.print(receiveHeader.to_address, HEX);
-    //Serial.print(receiveHeader.from_address, HEX);
-    //Serial.print("\n"); 
+
+    //Check that we are receiving messages, delete later
+//    Serial.print(receiveHeader.to_address, HEX);
+//    Serial.print(receiveHeader.from_address, HEX);
+//    Serial.print(receiveHeader.message_type);
+//    Serial.print("\n"); 
 
     //Find who the message is to
     for(int i=0; i<6; i++){
@@ -150,6 +153,7 @@ void receiveMessage()
     //Figure out what to do with the message
     int message_decision=0;
     message_decision=messageDecide(receiveHeader, to_node_index, from_node_index); 
+//    Serial.println(message_decision);
     switch(message_decision){
       case 1:
         //Print the message
@@ -157,6 +161,10 @@ void receiveMessage()
         for(int i = 3; i < 102; i++){
           printf("%c", everything[i]);
         }
+        printf("\n");
+        break;
+       case 2:
+        //broadcast message
         break;
       default: 
         //do nothing
@@ -165,16 +173,13 @@ void receiveMessage()
 }
 
 // ***Send Message***
-int sendMessage(int to_node_index) 
-{
-//  printf("entered sendMessage function\n");
+int sendMessage(int to_node_index){
   //Declare and Initialize Variables 
   bool messageSuccess=false;
   char send_payload[100] = "";
   memset(send_payload, 0, 100);
   RadioHeader myHeader;
 
-//  Serial.readBytesUntil(';',to_node,7);  
   Serial.readBytesUntil('\n',send_payload,100);
 //  Serial.println(send_payload);
 
@@ -206,66 +211,54 @@ int sendMessage(int to_node_index)
 
 void updateTable(int table_index){
   int buffer_position=connectionTable[table_index];
-  if(!has_five){
-    for(int i=0; i<6; i++){
-      if(connectionTable[i]!=0){
-        connectionTable[i]++;
-        if (connectionTable[i]==5)
-          has_five=true;
+  if(buffer_position!=1){
+    if(!has_five){
+      for(int i=0; i<6; i++){
+        if(connectionTable[i]!=0){
+          connectionTable[i]++;
+          if (connectionTable[i]==5)
+            has_five=true;
+        }
       }
     }
-  }
-  else{
-    for(int i=0; i<6; i++){
-      if(connectionTable[i]<buffer_position){
-        connectionTable[i]++;
+    else{
+      for(int i=0; i<6; i++){
+        if(connectionTable[i]<buffer_position)
+          connectionTable[i]++;
       }
     }
+    connectionTable[table_index]=1;
   }
-  connectionTable[table_index]=1;
 
   //Check Table
   for(int i=0; i<6; i++){
-    printf("%i\n", connectionTable[i]);
+    printf("%i ", connectionTable[i]);
   }
+  printf("\n");
 }
 
 int messageDecide(RadioHeader &receiveHeader, int to_node_index, int from_node_index){
-      if(receiveHeader.to_address == myAddresses[my_node_index].address){
-      if(receiveHeader.message_type=='M'){
-        return 1;
-      }
-      else if(receiveHeader.message_type=='A'){
-        printf("%s has received your message\n", myAddresses[from_node_index].userName.c_str());
-      }
-      else if(receiveHeader.message_type=='B'){
-        //Discard Broadcast Message
-      }
+  //Declare and Initialize Variables
+  int messageDecision=0; // Return variable
+  
+  if(receiveHeader.to_address == myAddresses[my_node_index].address){
+    if(receiveHeader.message_type=='M'){
+      messageDecision=1;
     }
-    else {
-      if(receiveHeader.message_type=='B'){
-        updateTable(from_node_index);
-      }
-      /*
-      if (receiveHeader.from_address!=myAddresses[my_node_index].address){
-        radio.openWritingPipe(myAddresses[x].address);
-        radio.stopListening();
-        radio.write(&everything, sizeof(everything));
-        radio.startListening();
-        /* Testing routing
-        Serial.println("Enter else");
-        uint8_t testMessage[5];
-        memset(testMessage, 0, 5);
-        testMessage[0]=myAddresses[2].address; 
-        testMessage[1]=myAddresses[0].address;
-        testMessage[2]='M';
-        testMessage[3]='!';
-        radio.stopListening();
-        radio.openWritingPipe(myAddresses[x].address);
-        radio.write(&testMessage, sizeof(testMessage));
-        radio.startListening();
-        */
-    }  
+    else if(receiveHeader.message_type=='A'){
+      printf("%s has received your message\n", myAddresses[from_node_index].userName.c_str());
+    }
+    else if(receiveHeader.message_type=='B'){
+      //Discard Broadcast Message
+    }
+  }
+  else {
+    if(receiveHeader.message_type=='B'){
+      updateTable(from_node_index);
+    }
+    messageDecision=2;
+  }  
+  return messageDecision;  
 }
 
 
