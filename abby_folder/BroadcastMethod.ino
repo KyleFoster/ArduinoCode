@@ -117,7 +117,7 @@ void receiveMessage()
         }
     }
     else{ 
-      if(start_time % 5000>4900){
+      if(start_time % 5000>4990){
         radio.stopListening();
         radio.write(&broadcastMessage, sizeof(broadcastMessage)); //Broadcast message to update connections
       }
@@ -210,6 +210,8 @@ void updateTable(int table_index){
     for(int i=0; i<6; i++){
       if(connectionTable[i]!=0){
         connectionTable[i]++;
+        if (connectionTable[i]==5)
+          has_five=true;
       }
     }
   }
