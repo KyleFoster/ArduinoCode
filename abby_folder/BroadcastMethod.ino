@@ -210,14 +210,45 @@ int sendMessage(int to_node_index){
 }
 
 void updateTable(int table_index){
+  //Abby's Method
+  bool done=false; 
+  int swap_num=20;
+  if(connectionTable[table_index]==1){
+    //do nothing
+  }
+  else{
+    swap_num=1;
+    while(!done){
+      for(int i=0; i<6; i++){
+        if(i!=table_index && swap_num==connectionTable[i]){
+          connectionTable[i]++;
+          swap_num=connectionTable[i];
+        }
+        else if(i==5 && swap_num!=connectionTable[i]){
+          done = true;
+        }
+      }
+    }
+  }
+  connectionTable[table_index]=1;
+  
+  /* Kyle's Method
   int buffer_position=connectionTable[table_index];
   if(buffer_position!=1){
     if(!has_five){
-      for(int i=0; i<6; i++){
-        if(connectionTable[i]!=0){
-          connectionTable[i]++;
-          if (connectionTable[i]==5)
-            has_five=true;
+      if (connectionTable[table_index] > 0){
+        for(int i=0; i<6; i++){
+          if(connectionTable[i]<buffer_position)
+            connectionTable[i]++;
+        } 
+      }
+      else{
+        for(int i=0; i<6; i++){
+          if(connectionTable[i]!=0){
+            connectionTable[i]++;
+            if (connectionTable[i]==5)
+              has_five=true;
+          }
         }
       }
     }
@@ -229,6 +260,7 @@ void updateTable(int table_index){
     }
     connectionTable[table_index]=1;
   }
+  */
 
   //Check Table
   for(int i=0; i<6; i++){
