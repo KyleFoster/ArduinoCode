@@ -185,8 +185,14 @@ void receiveMessage()
         //Relay Message
         to_node_index=checkConnection(final_node_index, from_node_index);
         printf("%i\n", to_node_index);
+        everything[0]=myAddresses[to_node_index].address;
+        radio.stopListening();
+        radio.write(&everything, sizeof(everything));
+        radio.startListening();
+        /*
         if(to_node_index<6)
-          sendMessage(final_node_index, to_node_index);
+          sendMessage(everything, final_node_index, to_node_index);
+        */
         break;
        case 3:
         //Broadcast Message
