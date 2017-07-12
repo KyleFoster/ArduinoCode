@@ -213,19 +213,17 @@ void updateTable(int table_index){
   //Abby's Method
   bool done=false; 
   int swap_num=20;
+  int buffer_value=connectionTable[table_index];
   if(connectionTable[table_index]==1){
     //do nothing
   }
   else{
     swap_num=1;
-    while(!done){
+    for(int i=0; i<buffer_value; i++){
       for(int i=0; i<6; i++){
-        if(i!=table_index && swap_num==connectionTable[i]){
+        if(swap_num==connectionTable[i]){
           connectionTable[i]++;
           swap_num=connectionTable[i];
-        }
-        else if(i==5 && swap_num!=connectionTable[i]){
-          done = true;
         }
       }
     }
