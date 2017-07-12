@@ -10,7 +10,7 @@
 
 RF24 radio(9,10);
 
-#define my_node_index 2 //Change this to your respective address index 
+#define my_node_index 0 //Change this to your respective address index 
 
 //Structs
 struct addressBook{
@@ -85,15 +85,9 @@ int readUserInput(){
     for(int i=0; i<6; i++){
       if(String(prefix)==myAddresses[i].userName){
         final_node_index=i;
-        for(int j=0; j<6; j++){
-          if(connectionTable[j]==1){
-            to_node_index=j;
-          }
-        }
+        to_node_index=checkConnection(final_node_index, my_node_index);
         if(to_node_index<6)
           sendMessage(final_node_index, to_node_index);
-        else
-          printf("You are not connected to the mesh\n");
         i=7;
       }
     }
@@ -166,16 +160,25 @@ void receiveMessage()
     message_decision=messageDecide(receiveHeader, to_node_index, from_node_index, final_node_index); 
 //    Serial.println(message_decision);
     switch(message_decision){
+      case 0: 
+        //Do nothing with the message
+        break;
       case 1:
         //Print the message
         printf("%s: ", myAddresses[from_node_index].userName.c_str());
-        for(int i = 3; i < 102; i++){
+        for(int i = 4; i < 102; i++){
           printf("%c", everything[i]);
         }
         printf("\n");
         break;
        case 2:
-        //broadcast message
+        //Relay Message
+        to_node_index=checkConnection(final_node_index, from_node_index);
+        if(to_node_index<6)
+          sendMessage(final_node_index, to_node_index);
+        break;
+       case 3:
+        //Broadcast Message
         break;
       default: 
         //do nothing
@@ -257,16 +260,38 @@ int messageDecide(RadioHeader &receiveHeader, int to_node_index, int from_node_i
   
   if(receiveHeader.to_address == myAddresses[my_node_index].address)
   {
-    if(receiveHeader.final_address==myAddresses[my_node_index].address && receiveHeader.message_type=='M')
+    if(receiveHeader.final_address==myAddresses[my_node_index].address && receiveHeader.message_type=='M') //Message for you to read
       messageDecision=1;
+    else if(receiveHeader.final_address!=myAddresses[my_node_index].address && receiveHeader.message_type=='M') //Message you need to relay
+      messageDecision=2;
   }
   else {
     if(receiveHeader.message_type=='B'){
       updateTable(from_node_index);
+      messageDecision=3;
     }
-    messageDecision=2;
   }  
   return messageDecision;  
+}
+
+int checkConnection(int final_node_index, int from_node_index){
+  int to_node_index=6;
+  int checkValue=1;
+  if(connectionTable[from_node_index]==checkValue)
+    checkValue++;
+  if(final_node_index!=0){
+    to_node_index=final_node_index;
+  }
+  else
+  {
+    for(int j=0; j<6; j++){
+      if(connectionTable[j]==checkValue)
+        to_node_index=j;
+    }
+    if(to_node_index==6)
+      Serial.println(F("You are not connected to the mesh."));
+  }
+  return to_node_index;
 }
 
 
