@@ -21,6 +21,7 @@ struct addressBook{
 struct RadioHeader {
   uint8_t to_address;
   uint8_t from_address;
+  uint8_t final_address;
   char message_type;
 };
 
@@ -69,7 +70,8 @@ int readUserInput(){
   //Declare and Initialize Variables
   char prefix[7];
   memset(prefix, 0, 7);
-  int to_node_index;
+  int final_node_index=6;
+  int to_node_index=6;
 
   //Get Serial input until ;
   Serial.readBytesUntil(';',prefix,7); 
@@ -77,19 +79,26 @@ int readUserInput(){
   //Decide what user wants to do and call appropriate functions
   if(String(prefix)=="ChangeCH"||String(prefix)=="ChangePA"||String(prefix)=="ChangeRT"){
     //Carlos put change code here
-    to_node_index=6;
+    final_node_index=6;
   }
   else{
     for(int i=0; i<6; i++){
       if(String(prefix)==myAddresses[i].userName){
-        to_node_index=i;
-        sendMessage(i);
-        //printf("returned to readUserInput\n");
+        final_node_index=i;
+        for(int j=0; j<6; j++){
+          if(connectionTable[j]==1){
+            to_node_index=j;
+          }
+        }
+        if(to_node_index<6)
+          sendMessage(final_node_index, to_node_index);
+        else
+          printf("You are not connected to the mesh\n");
         i=7;
       }
     }
   }
-  return to_node_index;
+  return final_node_index;
 }
 
 // ***Receive Message***
@@ -97,12 +106,14 @@ void receiveMessage()
 {
 
   //Declare and Initialize Variables
+  int final_node_index;
   int to_node_index;
   int from_node_index = 0;
-  uint8_t broadcastMessage[3];
+  uint8_t broadcastMessage[4];
   broadcastMessage[0]=myAddresses[my_node_index].address; //hardcode contents of broadcastMessage
   broadcastMessage[1]=myAddresses[my_node_index].address; 
-  broadcastMessage[2]='B';
+  broadcastMessage[2]=myAddresses[my_node_index].address;
+  broadcastMessage[3]='B';
   int start_time=millis();
   
   // wait until there is a message to receive
@@ -126,11 +137,11 @@ void receiveMessage()
     }
    }  
     
-    RadioHeader receiveHeader={0, 0, '\0'};
+    RadioHeader receiveHeader={0, 0, 0, '\0'};
     uint8_t everything[102];
     memset(everything, 0, 102);
     radio.read(&everything, sizeof(everything));
-    receiveHeader={everything[0], everything[1], everything[2]};
+    receiveHeader={everything[0], everything[1], everything[2], everything[3]};
 
     //Check that we are receiving messages, delete later
 //    Serial.print(receiveHeader.to_address, HEX);
@@ -140,8 +151,8 @@ void receiveMessage()
 
     //Find who the message is to
     for(int i=0; i<6; i++){
-      if(receiveHeader.to_address==myAddresses[i].address)
-        to_node_index = i;
+      if(receiveHeader.final_address==myAddresses[i].address)
+        final_node_index = i;
     }
     
     //Find who the message was from
@@ -152,7 +163,7 @@ void receiveMessage()
 
     //Figure out what to do with the message
     int message_decision=0;
-    message_decision=messageDecide(receiveHeader, to_node_index, from_node_index); 
+    message_decision=messageDecide(receiveHeader, to_node_index, from_node_index, final_node_index); 
 //    Serial.println(message_decision);
     switch(message_decision){
       case 1:
@@ -173,7 +184,7 @@ void receiveMessage()
 }
 
 // ***Send Message***
-int sendMessage(int to_node_index){
+int sendMessage(int final_node_index, int to_node_index){
   //Declare and Initialize Variables 
   bool messageSuccess=false;
   char send_payload[100] = "";
@@ -185,23 +196,24 @@ int sendMessage(int to_node_index){
 
   //Open Writing Pipe
   radio.openWritingPipe(myAddresses[to_node_index].address);
-  myHeader={myAddresses[to_node_index].address, myAddresses[my_node_index].address, 'M'};
+  myHeader={myAddresses[to_node_index].address, myAddresses[my_node_index].address, myAddresses[final_node_index].address, 'M'};
   
   uint8_t totalMessage[102];
   memset(totalMessage, 0, 102);
   totalMessage[0] = myHeader.to_address;
   totalMessage[1] = myHeader.from_address;
-  totalMessage[2] = myHeader.message_type;
+  totalMessage[2] = myHeader.final_address;
+  totalMessage[3] = myHeader.message_type;
 
-  for(int i = 3; i < 102; i++){
-    totalMessage[i] = send_payload[i - 3];
+  for(int i = 4; i < 102; i++){
+    totalMessage[i] = send_payload[i - 4];
   }
  
   radio.stopListening();
   messageSuccess=radio.write(&totalMessage, sizeof(totalMessage));
   Serial.print(myAddresses[my_node_index].userName);
   Serial.print(" -> ");
-  Serial.print(myAddresses[to_node_index].userName);
+  Serial.print(myAddresses[final_node_index].userName);
   Serial.print(": ");
   Serial.println(send_payload);
   radio.startListening();
@@ -210,55 +222,27 @@ int sendMessage(int to_node_index){
 }
 
 void updateTable(int table_index){
-  //Abby's Method
-  bool done=false; 
-  int swap_num=20;
-  int buffer_value=connectionTable[table_index];
-  if(connectionTable[table_index]==1){
-    //do nothing
-  }
-  else{
-    swap_num=1;
-    for(int i=0; i<buffer_value+1; i++){
-      for(int i=0; i<6; i++){
-        if(swap_num==connectionTable[i]){
-          connectionTable[i]++;
-          swap_num=connectionTable[i];
-        }
-      }
-    }
-  }
-  connectionTable[table_index]=1;
-  
-  /* Kyle's Method
   int buffer_position=connectionTable[table_index];
   if(buffer_position!=1){
-    if(!has_five){
-      if (connectionTable[table_index] > 0){
-        for(int i=0; i<6; i++){
-          if(connectionTable[i]<buffer_position)
-            connectionTable[i]++;
-        } 
-      }
-      else{
-        for(int i=0; i<6; i++){
-          if(connectionTable[i]!=0){
-            connectionTable[i]++;
-            if (connectionTable[i]==5)
-              has_five=true;
-          }
+    if(!has_five && buffer_position == 0){
+      Serial.println("top");
+      for(int i=0; i<6; i++){
+        if(connectionTable[i]!=0){
+          connectionTable[i]++;
+          if (connectionTable[i]==5)
+            has_five=true;
         }
       }
     }
     else{
+      Serial.println("bottom");
       for(int i=0; i<6; i++){
-        if(connectionTable[i]<buffer_position)
+        if(connectionTable[i]<buffer_position && connectionTable[i] != 0)
           connectionTable[i]++;
       }
     }
     connectionTable[table_index]=1;
   }
-  */
 
   //Check Table
   for(int i=0; i<6; i++){
@@ -267,20 +251,14 @@ void updateTable(int table_index){
   printf("\n");
 }
 
-int messageDecide(RadioHeader &receiveHeader, int to_node_index, int from_node_index){
+int messageDecide(RadioHeader &receiveHeader, int to_node_index, int from_node_index, int final_node_index){
   //Declare and Initialize Variables
   int messageDecision=0; // Return variable
   
-  if(receiveHeader.to_address == myAddresses[my_node_index].address){
-    if(receiveHeader.message_type=='M'){
+  if(receiveHeader.to_address == myAddresses[my_node_index].address)
+  {
+    if(receiveHeader.final_address==myAddresses[my_node_index].address && receiveHeader.message_type=='M')
       messageDecision=1;
-    }
-    else if(receiveHeader.message_type=='A'){
-      printf("%s has received your message\n", myAddresses[from_node_index].userName.c_str());
-    }
-    else if(receiveHeader.message_type=='B'){
-      //Discard Broadcast Message
-    }
   }
   else {
     if(receiveHeader.message_type=='B'){
