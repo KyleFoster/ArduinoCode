@@ -139,27 +139,35 @@ void receiveMessage()
     receiveHeader={everything[0], everything[1], everything[2], everything[3]};
 
     //Check that we are receiving messages, delete later
+//    Serial.println("Addresses in receive message");
 //    Serial.print(receiveHeader.to_address, HEX);
 //    Serial.print(receiveHeader.from_address, HEX);
+//    Serial.print(receiveHeader.final_address, HEX);
 //    Serial.print(receiveHeader.message_type);
 //    Serial.print("\n"); 
 
-    //Find who the message is to
+    //Find to_node_index
     for(int i=0; i<6; i++){
-      if(receiveHeader.final_address==myAddresses[i].address)
-        final_node_index = i;
+      if(receiveHeader.to_address==myAddresses[i].address)
+        to_node_index = i;
     }
     
-    //Find who the message was from
+    //Find from_node_index
     for(int i = 0; i < 6; i++){
       if(receiveHeader.from_address==myAddresses[i].address)
         from_node_index = i;
     }
 
+    //Find final_node_index
+    for(int i=0; i<6; i++){
+      if(receiveHeader.final_address==myAddresses[i].address)
+        final_node_index = i;
+    }
+
     //Figure out what to do with the message
     int message_decision=0;
     message_decision=messageDecide(receiveHeader, to_node_index, from_node_index, final_node_index); 
-    printf("%i\n", message_decision);
+    printf("message type: %i\n", message_decision);
 //    Serial.println(message_decision);
     switch(message_decision){
       case 0: 
@@ -203,6 +211,10 @@ int sendMessage(int final_node_index, int to_node_index){
   //Open Writing Pipe
   radio.openWritingPipe(myAddresses[to_node_index].address);
   myHeader={myAddresses[to_node_index].address, myAddresses[my_node_index].address, myAddresses[final_node_index].address, 'M'};
+//  Serial.println("Addresses in myHeader");
+//  Serial.println(myHeader.to_address, HEX);
+//  Serial.println(myHeader.from_address, HEX);
+//  Serial.println(myHeader.final_address, HEX);
   
   uint8_t totalMessage[102];
   memset(totalMessage, 0, 102);
@@ -260,6 +272,13 @@ void updateTable(int table_index){
 int messageDecide(RadioHeader &receiveHeader, int to_node_index, int from_node_index, int final_node_index){
   //Declare and Initialize Variables
   int messageDecision=0; // Return variable
+ // printf("to_node: %i, from_node: %i, final_node: %i\n", to_node_index, from_node_index, final_node_index);
+  /*
+  Serial.print(receiveHeader.to_address, HEX);
+  Serial.print(receiveHeader.from_address, HEX);
+  Serial.print(receiveHeader.final_address, HEX);
+  Serial.println(" ");
+  */
   
   if(receiveHeader.to_address == myAddresses[my_node_index].address)
   {
@@ -278,11 +297,16 @@ int messageDecide(RadioHeader &receiveHeader, int to_node_index, int from_node_i
 }
 
 int checkConnection(int final_node_index, int from_node_index){
+    //Check Table
+  for(int i=0; i<6; i++){
+    printf("%i ", connectionTable[i]);
+  }
+  printf("\n");
   int to_node_index=6;
   int checkValue=1;
   if(connectionTable[from_node_index]==checkValue)
     checkValue++;
-  if(final_node_index!=0){
+  if(connectionTable[final_node_index]!=0){
     to_node_index=final_node_index;
   }
   else
@@ -294,6 +318,7 @@ int checkConnection(int final_node_index, int from_node_index){
     if(to_node_index==6)
       Serial.println(F("You are not connected to the mesh."));
   }
+  printf("to_node_index: %i\n", to_node_index);
   return to_node_index;
 }
 
