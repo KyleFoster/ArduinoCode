@@ -32,7 +32,7 @@ struct RadioHeader {
 
 void setup() {
 
-  Serial.begin(1000000);
+  Serial.begin(38400);
   printf_begin();
   radio.begin();
   radio.enableDynamicPayloads();
@@ -69,7 +69,7 @@ int sendMessage()
     if (String(to_node) == myAddresses[i].userName)
     {
         radio.openWritingPipe(myAddresses[i].address);
-        myHeader={myAddresses[i].address, myAddresses[1].address};
+        myHeader={myAddresses[i].address, myAddresses[2].address};
         validAddress = true;
         x = i;
     }
@@ -109,6 +109,13 @@ int sendMessage()
 // ***Receive Message***
 void receiveMessage() 
 {
+  for(int i = 1; i < 7; i++){ // Open all writing pipes
+    radio.openReadingPipe(i, myAddresses[i - 1].address);
+  }
+  for(int i = 2; i < 7; i++){ // Open all writing pipes
+    radio.closeReadingPipe(myAddresses[i - 1].address);
+  }
+  radio.startListening();
   //Declare and Initialize Variables
   int x = 0;
   
@@ -152,7 +159,7 @@ void receiveMessage()
     }
     
     //Compare Addresses
-    if(receiveHeader.to_address == myAddresses[1].address){
+    if(receiveHeader.to_address == myAddresses[2].address){
       //Print the message between the curly braces
       printf("%s: ", myAddresses[y].userName.c_str());
       for(int i = (i_first+1); i < (i_second); i++){
@@ -334,9 +341,9 @@ void setupProfile()
     myName = eepromRead(nameBegin, nameLength);
     radio.printDetails();
   }
-  for(int i = 1; i < 7; i++){ // Open all writing pipes
-    radio.openReadingPipe(i, myAddresses[i - 1].address);
-  }
+//  for(int i = 1; i < 7; i++){ // Open all writing pipes
+//    radio.openReadingPipe(i, myAddresses[i - 1].address);
+//  }
   Serial.println("Address Book:\n\r"); // Print out contact list
   for(int i = 0; i < 6; i++){
      printf("%s\n", myAddresses[i].userName.c_str());
