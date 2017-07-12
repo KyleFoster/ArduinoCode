@@ -167,7 +167,7 @@ void receiveMessage()
     //Figure out what to do with the message
     int message_decision=0;
     message_decision=messageDecide(receiveHeader, to_node_index, from_node_index, final_node_index); 
-    printf("message type: %i\n", message_decision);
+ //   printf("message type: %i\n", message_decision);
 //    Serial.println(message_decision);
     switch(message_decision){
       case 0: 
