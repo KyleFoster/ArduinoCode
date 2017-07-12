@@ -10,7 +10,7 @@
 
 RF24 radio(9,10);
 
-#define my_node_index 0 //Change this to your respective address index 
+#define my_node_index 2 //Change this to your respective address index 
 
 //Structs
 struct addressBook{
@@ -236,6 +236,7 @@ void updateTable(int table_index){
   int buffer_position=connectionTable[table_index];
   if(buffer_position!=1){
     if(!has_five && buffer_position == 0){
+      Serial.println("top");
       for(int i=0; i<6; i++){
         if(connectionTable[i]!=0){
           connectionTable[i]++;
@@ -245,8 +246,9 @@ void updateTable(int table_index){
       }
     }
     else{
+      Serial.println("bottom");
       for(int i=0; i<6; i++){
-        if(connectionTable[i]<buffer_position)
+        if(connectionTable[i]<buffer_position && connectionTable[i] != 0)
           connectionTable[i]++;
       }
     }

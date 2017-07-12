@@ -10,7 +10,7 @@
 
 RF24 radio(9,10);
 
-#define my_node_index 0 //Change this to your respective address index 
+#define my_node_index 2 //Change this to your respective address index 
 
 //Structs
 struct addressBook{
@@ -219,7 +219,7 @@ void updateTable(int table_index){
   }
   else{
     swap_num=1;
-    for(int i=0; i<buffer_value; i++){
+    for(int i=0; i<buffer_value+1; i++){
       for(int i=0; i<6; i++){
         if(swap_num==connectionTable[i]){
           connectionTable[i]++;
