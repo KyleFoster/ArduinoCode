@@ -42,7 +42,7 @@ void setup() {
   printf_begin();
   radio.begin();
   radio.enableDynamicPayloads();
-  radio.setRetries(15, 15);
+  radio.setRetries(5, 5);
   radio.setAutoAck(true);
   radio.setChannel(70);
   radio.setPALevel(RF24_PA_MIN);
@@ -81,6 +81,12 @@ int readUserInput(){
   if(String(prefix)=="ChangeCH"||String(prefix)=="ChangePA"||String(prefix)=="ChangeRT"){
     //Carlos put change code here
     final_node_index=6;
+  }
+  else if(String(prefix)=="PrintCT"){//print connection table
+    for(int i=0; i<6; i++){
+      printf("%i ", connectionTable[i]);
+    }
+    printf("\n");
   }
   else{
     for(int i=0; i<6; i++){
@@ -123,7 +129,7 @@ void receiveMessage()
         }
     }
     else{ 
-      if(start_time % 5000>4990){
+      if(start_time % 5000>4980){
         radio.stopListening();
         radio.write(&broadcastMessage, sizeof(broadcastMessage)); //Broadcast message to update connections
         radio.startListening();
@@ -267,12 +273,6 @@ void updateTable(int table_index){
     }
     connectionTable[table_index]=1;
   }
-
-  //Check Table
-  for(int i=0; i<6; i++){
-    printf("%i ", connectionTable[i]);
-  }
-  printf("\n");
 }
 
 int messageDecide(RadioHeader &receiveHeader, int to_node_index, int from_node_index, int final_node_index){
@@ -294,7 +294,7 @@ int messageDecide(RadioHeader &receiveHeader, int to_node_index, int from_node_i
       messageDecision=2;
   }
   else {
-    if(receiveHeader.message_type=='B'){
+    if(receiveHeader.message_type=='B'&& receiveHeader.from_address!=myAddresses[my_node_index].address){ //Broadcast Message, update the connection table
       updateTable(from_node_index);
       messageDecision=3;
     }
@@ -304,9 +304,6 @@ int messageDecide(RadioHeader &receiveHeader, int to_node_index, int from_node_i
 
 int checkConnection(int final_node_index, int from_node_index){
     //Check Table
-  for(int i=0; i<6; i++){
-    printf("%i ", connectionTable[i]);
-  }
   printf("\n");
   int to_node_index=6;
   int checkValue=1;
