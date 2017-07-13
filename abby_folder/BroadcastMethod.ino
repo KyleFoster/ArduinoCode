@@ -196,7 +196,7 @@ void receiveMessage()
         break;
       case 1:
         //Print the message
-        printf("----------------------------------------");
+        printf("\n----------------------------------------");
         printf("%s: ", myAddresses[from_node_index].userName.c_str());
         for(int i = 4; i < 102; i++){
           printf("%c", everything[i]);
@@ -211,6 +211,7 @@ void receiveMessage()
         everything[0]=myAddresses[to_node_index].address;
         Serial.println(everything[0], HEX);
         radio.stopListening();
+        radio.flush_tx();
         radio.write(&everything, sizeof(everything));
         radio.startListening();
         /*
@@ -258,6 +259,7 @@ int sendMessage(int final_node_index, int to_node_index){
   }
  
   radio.stopListening();
+  radio.flush_tx();
   messageSuccess=radio.write(&totalMessage, sizeof(totalMessage));
   Serial.print(myAddresses[my_node_index].userName);
   Serial.print(" -> ");
