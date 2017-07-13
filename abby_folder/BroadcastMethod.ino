@@ -54,12 +54,8 @@ void setup() {
   radio.setPALevel(RF24_PA_MIN);
 
   //Additional Setup up code that ultimately should be put in Carlos's Setup Code
-  int j=0;
-  for(int i = 2; i < 7; i++){ // Open all writing pipes
-    if(j==my_node_index)  
-      j++;
-    radio.openReadingPipe(i, myAddresses[j].address);
-    j++;
+  for(int i = 1; i < 7; i++){ // Open all writing pipes
+    radio.openReadingPipe(i, myAddresses[i-1].address);
   }
   radio.startListening();
 
@@ -153,7 +149,7 @@ void receiveMessage()
         Serial.println(F("Broadcasting...\n"));
         radio.stopListening();
         radio.write(&broadcastMessage, sizeof(broadcastMessage)); //Broadcast message to update connections
-        radio.flush_tx();
+        //radio.flush_tx();
         radio.startListening();
       }
     }
@@ -203,11 +199,12 @@ void receiveMessage()
         break;
       case 1:
         //Print the message
+        printf("----------------------------------------");
         printf("%s: ", myAddresses[from_node_index].userName.c_str());
         for(int i = 4; i < 102; i++){
           printf("%c", everything[i]);
         }
-        printf("\n");
+        printf("----------------------------------------\n");
         break;
        case 2:
         //Relay Message
