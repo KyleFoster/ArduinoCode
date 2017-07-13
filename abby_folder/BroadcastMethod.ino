@@ -48,8 +48,12 @@ void setup() {
   radio.setPALevel(RF24_PA_MIN);
 
   //Additional Setup up code that ultimately should be put in Carlos's Setup Code
-  for(int i = 1; i < 7; i++){ // Open all writing pipes
-    radio.openReadingPipe(i, myAddresses[i - 1].address);
+  int j=0;
+  for(int i = 2; i < 7; i++){ // Open all writing pipes
+    if(j==my_node_index)  
+      j++;
+    radio.openReadingPipe(i, myAddresses[j].address);
+    j++;
   }
   radio.startListening();
 
@@ -89,17 +93,18 @@ int readUserInput(){
     }
     printf("\n");
   }
-  else{
+  else {
     for(int i=0; i<6; i++){
       if(String(prefix)==myAddresses[i].userName){
         final_node_index=i;
         to_node_index=checkConnection(final_node_index, my_node_index);
         Serial.println(F("returned to readUserInput"));
-        if(to_node_index<6)
-          sendMessage(final_node_index, to_node_index);
-          Serial.println(F("returned to readUserInput"));
         i=7;
       }
+    }
+    if(to_node_index<6){
+       sendMessage(final_node_index, to_node_index);
+       Serial.println(F("returned to readUserInput"));
     }
   }
   return final_node_index;
@@ -110,8 +115,8 @@ void receiveMessage()
 {
   Serial.println(F("Entered receiveMessage"));
   //Declare and Initialize Variables
-  int final_node_index;
-  int to_node_index;
+  int final_node_index=6;
+  int to_node_index=6;
   int from_node_index = 0;
   uint8_t broadcastMessage[4];
   broadcastMessage[0]=myAddresses[my_node_index].address; //hardcode contents of broadcastMessage
