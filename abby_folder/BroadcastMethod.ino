@@ -72,9 +72,7 @@ void setup() {
 void loop() {
   receiveMessage();
 }
-void printy(){
-  Serial.println("AY");
-}
+
 int readUserInput(){
   Serial.println(F("Entered readUserInput"));
   //Declare and Initialize Variables
@@ -117,7 +115,6 @@ int readUserInput(){
 // ***Receive Message***
 void receiveMessage() 
 {
-  t.every(10, printy); 
   Serial.println(F("Entered receiveMessage"));
   //Declare and Initialize Variables
   int final_node_index=6;
@@ -148,8 +145,8 @@ void receiveMessage()
         previousMillis=currentMillis;
         Serial.println(F("Broadcasting...\n"));
         radio.stopListening();
+        radio.flush_tx();
         radio.write(&broadcastMessage, sizeof(broadcastMessage)); //Broadcast message to update connections
-        //radio.flush_tx();
         radio.startListening();
       }
     }
