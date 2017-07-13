@@ -1,3 +1,6 @@
+#include <Event.h>
+#include <Timer.h>
+
 //Isolated Chat Room function
 
 //Libraries
@@ -9,6 +12,7 @@
 #include <string.h>
 
 RF24 radio(9,10);
+Timer t;
 
 #define my_node_index 0 //Change this to your respective address index 
 
@@ -27,6 +31,8 @@ struct RadioHeader {
 
 uint8_t connectionTable[6]={0,0,0,0,0,0};
 bool has_five=false;
+unsigned long previousMillis = 0; 
+unsigned long interval=2000;
 
 //Function Prototypes
   //void setup()
@@ -68,9 +74,11 @@ void setup() {
 }
 
 void loop() {
-  receiveMessage(); 
+  receiveMessage();
 }
-
+void printy(){
+  Serial.println("AY");
+}
 int readUserInput(){
   Serial.println(F("Entered readUserInput"));
   //Declare and Initialize Variables
@@ -113,6 +121,7 @@ int readUserInput(){
 // ***Receive Message***
 void receiveMessage() 
 {
+  t.every(10, printy); 
   Serial.println(F("Entered receiveMessage"));
   //Declare and Initialize Variables
   int final_node_index=6;
@@ -128,6 +137,7 @@ void receiveMessage()
   // wait until there is a message to receive
   while (!radio.available()) 
   {
+    unsigned long currentMillis=millis();
     if (Serial.available())
     {
         to_node_index=readUserInput(); //Calls when the user inputs data to the serial monitor
@@ -138,13 +148,14 @@ void receiveMessage()
         }
     }
     else{ 
-      if(start_time %5000>4980){
+      if((currentMillis - previousMillis > interval)){
+        previousMillis=currentMillis;
         Serial.println(F("Broadcasting...\n"));
         radio.stopListening();
         radio.write(&broadcastMessage, sizeof(broadcastMessage)); //Broadcast message to update connections
+        radio.flush_tx();
         radio.startListening();
       }
-      start_time=millis();
     }
    }  
     
