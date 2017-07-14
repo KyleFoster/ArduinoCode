@@ -1,6 +1,3 @@
-#include <Event.h>
-#include <Timer.h>
-
 //Isolated Chat Room function
 
 //Libraries
@@ -12,7 +9,6 @@
 #include <string.h>
 
 RF24 radio(9,10);
-Timer t;
 
 #define my_node_index 0 //Change this to your respective address index 
 
@@ -40,7 +36,7 @@ unsigned long interval=2000;
   //int sendMessage(int to_node_index)
   //void receiveMessage()
   //int readUserInput
-  //
+  //int checkConnection(int final_node_index, int from_node_index)
 
 void setup() {
   // put your setup code here, to run once:
@@ -51,7 +47,8 @@ void setup() {
   radio.setRetries(5, 5);
   radio.setAutoAck(true);
   radio.setChannel(120);
-  radio.setPALevel(RF24_PA_MIN);
+  radio.setPALevel(RF24_PA_MAX);
+  radio.setDataRate(RF24_250KBPS);
 
   //Additional Setup up code that ultimately should be put in Carlos's Setup Code
   for(int i = 1; i < 7; i++){ // Open all writing pipes
@@ -95,7 +92,7 @@ int readUserInput(){
     }
     printf("\n");
   }
-  else {
+  else{
     for(int i=0; i<6; i++){
       if(String(prefix)==myAddresses[i].userName){
         final_node_index=i;
@@ -135,10 +132,6 @@ void receiveMessage()
     {
         to_node_index=readUserInput(); //Calls when the user inputs data to the serial monitor
         Serial.println(F("returned to receiveMessage"));
-        if(to_node_index<6){
-          radio.openWritingPipe(myAddresses[to_node_index].address);
-          radio.startListening();
-        }
     }
     else{ 
       if((currentMillis - previousMillis > interval)){
@@ -192,6 +185,8 @@ void receiveMessage()
 //    Serial.println(message_decision);
     switch(message_decision){
       case 0: 
+        printf("\n-----------------------GARBAGE------------------\n");
+        radio.flush_rx();
         //Do nothing with the message
         break;
       case 1:
@@ -267,7 +262,6 @@ int sendMessage(int final_node_index, int to_node_index){
   Serial.print(": ");
   Serial.println(send_payload);
   radio.startListening();
-
   return messageSuccess;
 }
 
