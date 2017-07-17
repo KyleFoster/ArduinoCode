@@ -47,18 +47,24 @@ void setup()
   printf_begin();
   radio.begin();
   radio.enableDynamicPayloads();
+  radio.setAutoAck(true);
 
   // Open all of the reading pipes
-  int j = 0;
-  for (int i = 1; i < 6; i++)
-  {
-    if (j = my_node_index) 
-    {
-      j++;
-    }
-    radio.openReadingPipe(i, myAddresses[j].address);
-    j++;
-  }
+//  int j = 0;
+//  for (int i = 1; i < 6; i++)
+//  {
+//    if (j = my_node_index) 
+//    {
+//      j++;
+//    }
+//    radio.openReadingPipe(i, myAddresses[j].address);
+//    j++;
+//  }
+
+  for(int i = 1; i < 7; i++){ // Open all writing pipes
+    radio.openReadingPipe(i, myAddresses[i - 1].address);
+  }  
+
   radio.startListening();
   
   // Print out contact list
@@ -96,13 +102,14 @@ void loop()
         broadcastMessage();
       }
     }
-    receiveMessage();
   }
+    receiveMessage();
 }
 
 // ***Receive Message ***
 void receiveMessage(void)
 {
+  Serial.println(F("In receiveMessage"));
   //Declare and Initialize Variables
   int final_node_index = 6;
   int to_node_index = 6;
@@ -138,6 +145,7 @@ void receiveMessage(void)
 // ***Message Decide***
 void messageDecide(RadioHeader &decide_header, int to_node_index, int from_node_index, int final_node_index)
 {
+  Serial.println(F("Inside messageDecide"));
   if(decide_header.to_address == myAddresses[my_node_index].address)
   {
     if(decide_header.final_address == myAddresses[my_node_index].address && decide_header.message_type == 'M') //Message for you to read
@@ -165,6 +173,7 @@ void messageDecide(RadioHeader &decide_header, int to_node_index, int from_node_
 // ***Relay Message***
 void relayMessage(int final_node_index, int from_node_index) 
 {
+  Serial.println(F("Inside relayMessage"));
   int to_node_index;
   to_node_index = checkConnection(final_node_index, from_node_index);
   received_message[0] = myAddresses[to_node_index].address;
@@ -177,6 +186,7 @@ void relayMessage(int final_node_index, int from_node_index)
 // ***Update the Stack***
 void updateTable(int table_index)
 {
+  Serial.println(F("Inside updateTable"));
   int buffer_position = connectionTable[table_index];
   if (buffer_position != 1)
   {
@@ -207,6 +217,7 @@ void updateTable(int table_index)
 // ***Send Message***
 void sendMessage(RadioHeader &sendHeader) 
 {
+  Serial.println(F("Inside sendMessage"));
   char send_payload[32] = "";
   memset(send_payload, 0, 32);
   int final_node_index;
@@ -248,7 +259,7 @@ void sendMessage(RadioHeader &sendHeader)
 // ***Read User Input***
 RadioHeader readUserInput(void)
 {
-  Serial.println(F("Entered readUserInput"));
+  Serial.println(F("Inside readUserInput"));
   //Declare and Initialize Variables
   char prefix[10];
   memset(prefix, 0, 10);
@@ -313,6 +324,7 @@ void broadcastMessage(void)
 // ***Check for Connections***
 int checkConnection(int final_node_index, int from_node_index)
 {
+  Serial.println(F("Inside checkConnection"));
   int to_node_index = 6;
   int checkValue = 1;
   if (connectionTable[from_node_index] == checkValue)
