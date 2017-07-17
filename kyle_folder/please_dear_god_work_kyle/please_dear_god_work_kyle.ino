@@ -139,7 +139,13 @@ void receiveMessage(void)
 void messageDecide(RadioHeader &decide_header, int to_node_index, int from_node_index, int final_node_index)
 {
   Serial.println(F("Inside messageDecide"));
-  if (decide_header.to_address == myAddresses[my_node_index].address)
+  //Check for garbage first
+  if (decide_header.message_type != "M" || decide_header.message_type != "B")
+  {
+    Serial.println("/////////GARBAGE ALERT!!!////////////");
+    radio.begin();
+  }
+  else if (decide_header.to_address == myAddresses[my_node_index].address)
   {
     if (decide_header.final_address == myAddresses[my_node_index].address && decide_header.message_type == 'M') //Message for you to read
       {
@@ -157,11 +163,12 @@ void messageDecide(RadioHeader &decide_header, int to_node_index, int from_node_
           relayMessage(final_node_index, from_node_index);
       }
   }
-  else {
+  else 
+  {
     if (decide_header.message_type=='B'&& decide_header.from_address != myAddresses[my_node_index].address){ //Broadcast Message, update the connection table
       updateTable(from_node_index);
     }
-  }  
+  }
 }
 
 // ***Relay Message***
