@@ -69,7 +69,7 @@ int sendMessage()
     if (String(to_node) == myAddresses[i].userName)
     {
         radio.openWritingPipe(myAddresses[i].address);
-        myHeader={myAddresses[i].address, myAddresses[2].address};
+        myHeader={myAddresses[i].address, myAddresses[4].address};
         validAddress = true;
         x = i;
     }
@@ -159,7 +159,7 @@ void receiveMessage()
     }
     
     //Compare Addresses
-    if(receiveHeader.to_address == myAddresses[2].address){
+    if(receiveHeader.to_address == myAddresses[4].address){
       //Print the message between the curly braces
       printf("%s: ", myAddresses[y].userName.c_str());
       for(int i = (i_first+1); i < (i_second); i++){

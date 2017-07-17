@@ -10,7 +10,7 @@
 
 RF24 radio(9,10);
 
-#define my_node_index 4 //Change this to your respective address index 
+#define my_node_index 5 //Change this to your respective address index 
 
 //Structs
 struct addressBook {
@@ -36,11 +36,13 @@ void setup() {
   Serial.begin(1000000);
   printf_begin();
   radio.begin();
+  //radio.failureDetected = 0;
   radio.enableDynamicPayloads();
   radio.setRetries(5, 5);
   radio.setAutoAck(true);
   radio.setChannel(120);
-  radio.setDataRate(RF24_250KBPS);
+  //radio.setDataRate(RF24_250KBPS);
+  //Serial.println(radio.failureDetected);
 
    /*Open all writing pipes*/
   for (i = 1; i < 7; i++)
@@ -62,50 +64,6 @@ void setup() {
 
 void loop() {
   receiveMessage();
-}
-
-int readUserInput(){
-  Serial.println(F("Entered readUserInput"));
- 
-  char prefix[10];
-  int final_node_index=6;
-  int to_node_index=6;
-
-  memset(prefix, 0, 10);
-
-  /*Read in user input until ;*/
-  Serial.readBytesUntil(';',prefix,10); 
-  
-  /*Decide what user wants to do and call appropriate functions*/
-  if (String(prefix) == "ChangeCH"||String(prefix) == "ChangePA"||String(prefix) == "ChangeRT")
-  {
-    /*Do nothing*/
-    final_node_index=6;
-  }
-  else if (String(prefix) == "PrintCT")
-  {
-    for (i=0; i<6; i++)
-      printf("%i ", connectionTable[i]);
-    printf("\n");
-  }
-  else 
-  {
-    for (i=0; i<6; i++)
-    {
-      if (String(prefix) == myAddresses[i].userName){
-        final_node_index = i;
-        to_node_index = checkConnection(final_node_index, my_node_index);
-        Serial.println(F("returned to readUserInput"));
-        i = 7;
-      }
-    }
-    if(to_node_index<6)
-    {
-       sendMessage(final_node_index, to_node_index);
-       Serial.println(F("returned to readUserInput"));
-    }
-  }
-  return final_node_index;
 }
 
 
@@ -140,7 +98,7 @@ void receiveMessage()
         previousMillis = currentMillis;
         Serial.println(F("Broadcasting...\n"));
         radio.stopListening();
-        radio.flush_tx();
+        //radio.flush_tx();
         radio.write(&broadcastMessage, sizeof(broadcastMessage)); //Broadcast message to update connections
         radio.startListening();
       }
@@ -210,7 +168,7 @@ void receiveMessage()
       everything[0] = myAddresses[to_node_index].address;
       Serial.println(everything[0], HEX);
       radio.stopListening();
-      radio.flush_tx();
+      //radio.flush_tx();
       radio.write(&everything, sizeof(everything));
       radio.startListening();
       break;
@@ -221,6 +179,51 @@ void receiveMessage()
       //do nothing
       break;
   }  
+}
+
+
+int readUserInput(){
+  Serial.println(F("Entered readUserInput"));
+ 
+  char prefix[10];
+  int final_node_index=6;
+  int to_node_index=6;
+
+  memset(prefix, 0, 10);
+
+  /*Read in user input until ;*/
+  Serial.readBytesUntil(';',prefix,10); 
+  
+  /*Decide what user wants to do and call appropriate functions*/
+  if (String(prefix) == "ChangeCH"||String(prefix) == "ChangePA"||String(prefix) == "ChangeRT")
+  {
+    /*Do nothing*/
+    final_node_index=6;
+  }
+  else if (String(prefix) == "PrintCT")
+  {
+    for (i=0; i<6; i++)
+      printf("%i ", connectionTable[i]);
+    printf("\n");
+  }
+  else 
+  {
+    for (i=0; i<6; i++)
+    {
+      if (String(prefix) == myAddresses[i].userName){
+        final_node_index = i;
+        to_node_index = checkConnection(final_node_index, my_node_index);
+        Serial.println(F("returned to readUserInput"));
+        i = 7;
+      }
+    }
+    if(to_node_index<6)
+    {
+       sendMessage(final_node_index, to_node_index);
+       Serial.println(F("returned to readUserInput"));
+    }
+  }
+  return final_node_index;
 }
 
 
@@ -252,7 +255,7 @@ int sendMessage(int final_node_index, int to_node_index){
   }
  
   radio.stopListening();
-  radio.flush_tx();
+  //radio.flush_tx();
   messageSuccess = radio.write(&totalMessage, sizeof(totalMessage));
   Serial.print(myAddresses[my_node_index].userName);
   Serial.print(" -> ");

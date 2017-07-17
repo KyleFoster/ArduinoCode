@@ -22,10 +22,11 @@ struct RadioHeader {
   uint8_t to_address;
   uint8_t from_address;
   uint8_t final_address;
+  uint8_t ttl;
   char message_type;
 };
 
-RadioHeader receiveHeader = {0, 0, 0, '\0'};
+RadioHeader receiveHeader = {0, 0, 0, 5, '\0'};
 uint8_t received_message[32];
 
 uint8_t connectionTable[6] = {0,0,0,0,0,0};
@@ -49,25 +50,15 @@ void setup()
   radio.enableDynamicPayloads();
   radio.setAutoAck(true);
 
-  // Open all of the reading pipes
-//  int j = 0;
-//  for (int i = 1; i < 6; i++)
-//  {
-//    if (j = my_node_index) 
-//    {
-//      j++;
-//    }
-//    radio.openReadingPipe(i, myAddresses[j].address);
-//    j++;
-//  }
-
-  for(int i = 1; i < 7; i++){ // Open all writing pipes
+  /* Open all the reading pipes */
+  for (int i = 1; i < 7; i++)
+  {
     radio.openReadingPipe(i, myAddresses[i - 1].address);
   }  
 
   radio.startListening();
   
-  // Print out contact list
+  /* Print out contact list */
   Serial.println(F("Address Book:\n\r"));
   for (int i = 0; i < 6; i++)
   {
@@ -84,7 +75,7 @@ void loop()
   RadioHeader sendHeader;
   while (!radio.available()) // Wait for incoming data/message
   {
-    sendHeader = {0, 0, 0, '\0'};
+    sendHeader = {0, 0, 0, 5, '\0'};
     unsigned long currentMillis = millis(); // Start counting for broadcast timer
     if (Serial.available()) // Checks for user input from Serial Monitor
     {
@@ -114,17 +105,18 @@ void receiveMessage(void)
   int final_node_index = 6;
   int to_node_index = 6;
   int from_node_index = 6;
-  RadioHeader receive_header={0, 0, 0, '\0'};
+  RadioHeader receive_header={0, 0, 0, 5, '\0'};
 
   memset(received_message, 0, 32);
   radio.read(&received_message, sizeof(received_message));
-  receive_header = {received_message[0], received_message[1], received_message[2], received_message[3]};  
+  receive_header = {received_message[0], received_message[1], received_message[2], received_message[3], received_message[4]};  
 
   //Check that we are receiving messages, delete later
   Serial.println("Addresses in receive message");
   Serial.print(receive_header.to_address, HEX);
   Serial.print(receive_header.from_address, HEX);
   Serial.print(receive_header.final_address, HEX);
+  Serial.print(receive_header.ttl);
   Serial.print(receive_header.message_type);
   Serial.print("\n"); 
 
@@ -160,7 +152,8 @@ void messageDecide(RadioHeader &decide_header, int to_node_index, int from_node_
       }
     else if(decide_header.final_address != myAddresses[my_node_index].address && decide_header.message_type == 'M') //Message you need to relay
       {
-        relayMessage(final_node_index, from_node_index);
+        if (decide_header.ttl > 0)
+          relayMessage(final_node_index, from_node_index);
       }
   }
   else {
@@ -177,6 +170,7 @@ void relayMessage(int final_node_index, int from_node_index)
   int to_node_index;
   to_node_index = checkConnection(final_node_index, from_node_index);
   received_message[0] = myAddresses[to_node_index].address;
+  received_message[3] -= 1;
   radio.stopListening();
   radio.openWritingPipe(myAddresses[to_node_index].address);
   radio.write(&received_message, sizeof(received_message));
