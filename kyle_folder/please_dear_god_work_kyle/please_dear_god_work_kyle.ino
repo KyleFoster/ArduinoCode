@@ -171,7 +171,7 @@ void relayMessage(int final_node_index, int from_node_index)
   int to_node_index;
   to_node_index = checkConnection(final_node_index, from_node_index);
   received_message[0] = myAddresses[to_node_index].address;
-  received_message[3] -= 1;
+  received_message[3]--;
   radio.stopListening();
   radio.openWritingPipe(myAddresses[to_node_index].address);
   radio.write(&received_message, sizeof(received_message));
@@ -261,7 +261,7 @@ RadioHeader readUserInput(void)
   memset(prefix, 0, 10);
   int final_node_index = 6;
   int to_node_index = 6;
-  RadioHeader returnHeader = {myAddresses[my_node_index].address, myAddresses[my_node_index].address, myAddresses[my_node_index].address, 'q'};
+  RadioHeader returnHeader = {myAddresses[my_node_index].address, myAddresses[my_node_index].address, myAddresses[my_node_index].address, 5, 'q'};
 
   //Get Serial input until ;
   Serial.readBytesUntil(';',prefix,10); 
@@ -294,7 +294,7 @@ RadioHeader readUserInput(void)
     }
     if (to_node_index < 6)
     {
-       returnHeader = {myAddresses[to_node_index].address, myAddresses[my_node_index].address, myAddresses[final_node_index].address, 'M'}; 
+       returnHeader = {myAddresses[to_node_index].address, myAddresses[my_node_index].address, myAddresses[final_node_index].address, 5, 'M'}; 
     }
   }
   return returnHeader;
