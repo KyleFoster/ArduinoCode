@@ -10,7 +10,7 @@
 
 RF24 radio(9,10);
 
-#define my_node_index 4 //Change this to your respective address index 
+#define my_node_index 1 //Change this to your respective address index 
 
 //Structs
 struct addressBook{
@@ -49,7 +49,6 @@ void setup()
   radio.begin();
   radio.enableDynamicPayloads();
   radio.setAutoAck(true);
-  radio.setPALevel(RF24_PA_MIN);
 
   /* Open all the reading pipes */
   for (int i = 1; i < 7; i++)
@@ -140,10 +139,15 @@ void messageDecide(RadioHeader &decide_header, int to_node_index, int from_node_
 {
   Serial.println(F("Inside messageDecide"));
   //Check for garbage first
-  if (decide_header.message_type != "M" || decide_header.message_type != "B")
+  if (decide_header.message_type != 'M' && decide_header.message_type != 'B')
   {
     Serial.println("/////////GARBAGE ALERT!!!////////////");
     radio.begin();
+    for (int i = 1; i < 7; i++)
+    {
+      radio.openReadingPipe(i, myAddresses[i - 1].address);
+    }  
+    radio.startListening();
   }
   else if (decide_header.to_address == myAddresses[my_node_index].address)
   {
