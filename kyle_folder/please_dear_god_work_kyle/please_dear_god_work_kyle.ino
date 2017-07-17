@@ -49,6 +49,7 @@ void setup()
   radio.begin();
   radio.enableDynamicPayloads();
   radio.setAutoAck(true);
+  radio.setPALevel(RF24_PA_MIN);
 
   /* Open all the reading pipes */
   for (int i = 1; i < 7; i++)
@@ -144,7 +145,7 @@ void messageDecide(RadioHeader &decide_header, int to_node_index, int from_node_
       {
         printf("\n----------------------------------------");
         printf("%s: ", myAddresses[from_node_index].userName.c_str());
-        for (int i = 4; i < 32; i++)
+        for (int i = 5; i < 32; i++)
         {
           printf("%c", received_message[i]);
         }
@@ -227,9 +228,9 @@ void sendMessage(RadioHeader &sendHeader)
   totalMessage[3] = sendHeader.ttl;
   totalMessage[4] = sendHeader.message_type;
 
-  for (int i = 4; i < 32; i++)
+  for (int i = 5; i < 32; i++)
   {
-    totalMessage[i] = send_payload[i - 4];
+    totalMessage[i] = send_payload[i - 5];
   }
 
   for (int i = 0; i < 6; i++)
