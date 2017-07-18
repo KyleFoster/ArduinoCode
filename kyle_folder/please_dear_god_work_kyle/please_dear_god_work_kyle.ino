@@ -252,16 +252,19 @@ void updateTable(int table_index)
       }
     }
     c_t[table_index].value = 1;
-    for (int i = 0; i < 6; i++)  //update update_til_reset_values
+  }
+  for (int i = 0; i < 6; i++)  //update update_til_reset_values
+  {
+    if (c_t[i].value == 1)     //reset new number 1 to update_til_reset = 10
+      c_t[i].updates_til_reset = 10;
+    else                       //else minus 1 for all other update_til_resets 
     {
-      if (c_t[i].value == 1)     //reset new number 1 to update_til_reset = 10
-        c_t[i].updates_til_reset = 10;
-      else                       //else minus 1 for all other update_til_resets 
+      if (c_t[i].value != 0)   //minus one for all except when c_t.values == 0
+        c_t[i].updates_til_reset--;
+      if (c_t[i].updates_til_reset == 0)  //if update_til_reset == 0 then reset value in stack to 0, ie unconnected
       {
-        if (c_t[i].value != 0)   //minus one for all except when c_t.values == 0
-          c_t[i].updates_til_reset--;
-        if (c_t[i].updates_til_reset == 0)  //if update_til_reset == 0 then reset value in stack to 0, ie unconnected
-          c_t[i].value = 0;
+        c_t[i].value = 0;
+        c_t[i].updates_til_reset = 10;
       }
     }
   }
