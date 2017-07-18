@@ -24,7 +24,7 @@ struct RadioHeader {
   uint8_t final_address;
   uint8_t ttl;
   char message_type;
-};
+} receiveHeader = {0, 0, 0, 5, '\0'};
 
 struct ConnectionTable
 { 
@@ -32,17 +32,7 @@ struct ConnectionTable
   uint8_t updates_til_reset;
 } c_t[6] = {{0,10}, {0,10}, {0,10}, {0,10}, {0,10}, {0,10}}; 
 
-//ConnectionTable c_t[6] = {{0,10}, {0,10}, {0,10}, {0,10}, {0,10}, {0,10}};
-//for (int i = 0; i < 6; i++)
-//{
-//  c_t[i].value = 0;
-//  c_t[i].updates_til_reset = 10;
-//}
-
-RadioHeader receiveHeader = {0, 0, 0, 5, '\0'};
-
 uint8_t received_message[32];
-//uint8_t connectionTable[6] = {0,0,0,0,0,0};
 uint8_t channel;
 bool has_five = false;
 unsigned long previousMillis = 0; 
@@ -304,7 +294,6 @@ void sendMessage(RadioHeader &sendHeader)
   {
     totalMessage[i] = send_payload[i - 5];
   }
-
   for (int i = 0; i < 6; i++)
   {
     if (sendHeader.final_address == myAddresses[i].address)
@@ -453,8 +442,7 @@ void scanChannels() {
         if (radio.available())
         {
           Serial.println("reading...");
-          radio.read(&receive_int, sizeof(receive_int));
-          
+          radio.read(&receive_int, sizeof(receive_int));  
         }
         end_time = millis();  
       }
