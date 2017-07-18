@@ -30,7 +30,7 @@ struct ConnectionTable
 { 
   uint8_t value;
   uint8_t updates_til_reset;
-} c_t[6] = {{0,10}, {0,10}, {0,10}, {0,10}, {0,10}, {0,10}}; ;
+} c_t[6] = {{0,10}, {0,10}, {0,10}, {0,10}, {0,10}, {0,10}}; 
 
 //ConnectionTable c_t[6] = {{0,10}, {0,10}, {0,10}, {0,10}, {0,10}, {0,10}};
 //for (int i = 0; i < 6; i++)
@@ -65,6 +65,13 @@ void setup()
   radio.enableDynamicPayloads();
   radio.setAutoAck(true);
 
+  /* Open all the reading pipes */
+  for (int i = 1; i < 7; i++)
+  {
+    radio.openReadingPipe(i, myAddresses[i - 1].address);
+  }  
+  radio.startListening();
+
   /*Scan or set to random channel between 0-127*/
   Serial.println();
   Serial.println("Enter 1 to set your own channel to a random channel between 0-127, enter anything else to scan: ");
@@ -84,14 +91,6 @@ void setup()
     scanChannels();
   }
   /*******************************************/
-  
-
-  /* Open all the reading pipes */
-  for (int i = 1; i < 7; i++)
-  {
-    radio.openReadingPipe(i, myAddresses[i - 1].address);
-  }  
-  radio.startListening();
   
   /* Print out contact list */
   Serial.println(F("Address Book:\n\r"));
@@ -153,7 +152,7 @@ void receiveMessage(void)
   Serial.print(receive_header.final_address, HEX);
   Serial.print(receive_header.ttl);
   Serial.print(receive_header.message_type);
-  Serial.print("\n"); 
+  Serial.print("\n");
 
   //Find indicies
   for (int i = 0; i < 6; i++)
@@ -259,22 +258,24 @@ void updateTable(int table_index)
         c_t[i].updates_til_reset = 10;
       else                       //else minus 1 for all other update_til_resets 
       {
-        c_t[i].updates_til_reset--;
+        if (c_t[i].value != 0)   //minus one for all except when c_t.values == 0
+          c_t[i].updates_til_reset--;
         if (c_t[i].updates_til_reset == 0)  //if update_til_reset == 0 then reset value in stack to 0, ie unconnected
           c_t[i].value = 0;
       }
     }
   }
   /* Print c_t */
+  for (int i=0; i<6; i++)
+  {
+    printf("%i ", c_t[i].value);
+  }
+    printf("\n");
   for (int i = 0; i < 6; i++) 
   {
-    Serial.print(c_t[i].value + "  ");
+    printf("%i ", c_t[i].updates_til_reset);
   }
   Serial.println();
-  for (int i = 0; i < 6; i++) 
-  {
-    Serial.print(c_t[i].updates_til_reset + "  ");
-  }
 }
 
 // ***Send Message***
@@ -421,14 +422,14 @@ int checkConnection(int final_node_index, int from_node_index)
 
 
 void scanChannels() {
-  radio.openWritingPipe(myAddresses[(my_node_index + 1) % 6].address);
-  radio.openReadingPipe(1, myAddresses[0].address);
-  radio.startListening();
+  //radio.openWritingPipe(myAddresses[(my_node_index + 1) % 6].address);
+  //radio.openReadingPipe(1, myAddresses[0].address);
+  //radio.startListening();
   
   //Serial.println("searching for channels...");
   bool found_channel = false;
-  int i = 127;
-  uint8_t receive_int = 200;
+  int i = 50;
+  uint8_t receive_int[6] = {200,200,200,200,200,200};
   
   while (!found_channel)
   {
@@ -448,22 +449,28 @@ void scanChannels() {
       {
         if (radio.available())
         {
+          Serial.println("reading...");
           radio.read(&receive_int, sizeof(receive_int));
+          
         }
         end_time = millis();  
       }
-      printf("received int: %d\n\r", receive_int);
-      if (receive_int == i)
+      for (int i = 0; i < 5; i++) 
+      {
+        Serial.println(receive_int[i], HEX);
+      }
+      Serial.println(receive_int[5]);
+      if (receive_int[5] == i)
       {
         found_channel = true;
         channel = i;
-        Serial.println("channel is found...");
+        Serial.println("channel set to: " + i);
       }
       else
         Serial.println("Failed to authenticate");
     }
     i--;
     if (i<0)
-      i = 127;
+      i = 50;
   }
 }
