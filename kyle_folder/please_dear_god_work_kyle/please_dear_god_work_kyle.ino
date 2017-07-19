@@ -38,6 +38,8 @@ bool has_five = false;
 unsigned long previousMillis = 0; 
 unsigned long interval = 5000; // 5 second delay
 char user_input[5] = "";
+int random_interval = random(0,5000);
+bool already_broadcast = false;
 
 //Function Prototypes
   //void setup()
@@ -54,6 +56,7 @@ void setup()
   radio.begin();
   radio.enableDynamicPayloads();
   radio.setAutoAck(true);
+  randomSeed(analogRead(0));
 
   /* Open all the reading pipes */
   for (int i = 1; i < 7; i++)
@@ -114,11 +117,17 @@ void loop()
       if ((currentMillis - previousMillis > interval))
       {
         previousMillis = currentMillis;
-        broadcastMessage();
+        already_broadcast = false;
+        random_interval = random(0,5000);
       }
+      if (currentMillis - previousMillis > random_interval && !already_broadcast)
+      {
+        broadcastMessage();
+        already_broadcast = true;
+      } 
     }
   }
-    receiveMessage();
+  receiveMessage();
 }
 
 // ***Receive Message ***
