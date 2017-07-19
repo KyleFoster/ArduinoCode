@@ -39,6 +39,7 @@ void setup() {
   radio.setRetries(15, 15);
   radio.startListening();
   radio.setAutoAck(true);
+  radio.setChannel(90);
 
   setupProfile();
 
