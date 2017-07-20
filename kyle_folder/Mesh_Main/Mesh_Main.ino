@@ -54,6 +54,7 @@ void setup()
   printf_begin();
   radio.begin();
   radio.enableDynamicPayloads();
+  radio.enableAckPayload();
   radio.setAutoAck(true);
   randomSeed(analogRead(0));
 
@@ -404,7 +405,7 @@ RadioHeader readUserInput()
 
 
 /********************************broadcastMessage()***************************************************/
-void broadcastMessage(void) 
+void broadcastMessage() 
 {
   uint8_t broadcastMessage[6];
   
@@ -416,7 +417,10 @@ void broadcastMessage(void)
   broadcastMessage[5] = channel;
   
   Serial.println(F("Broadcasting...\n"));
-  radio.stopListening();
+
+  radio.openWritingPipe(myAddresses[0].address);
+  radio.openReadingPipe(1,myAddresses[1].address);
+  radio.startListening();
   radio.openWritingPipe(myAddresses[(my_node_index + 1) % 6].address); 
   radio.write(&broadcastMessage, sizeof(broadcastMessage)); //Broadcast message to update connections
   radio.startListening();
@@ -462,12 +466,12 @@ int checkConnection(int final_node_index, int from_node_index)
 
 /*************************************scanChannels()**************************************************/
 void scanChannels() {
-  //radio.openWritingPipe(myAddresses[(my_node_index + 1) % 6].address);
-  //radio.openReadingPipe(1, myAddresses[0].address);
-  //radio.startListening();
+  radio.openWritingPipe(myAddresses[1].address);
+  radio.openReadingPipe(1,myAddresses[0].address);
+  radio.startListening();
   
   //Serial.println("searching for channels...");
-  int i = 50;
+  int i = 127;
   int end_time = 0;
   int start_time = 0;
   bool found_channel = false;
@@ -484,14 +488,14 @@ void scanChannels() {
       printf("Checking message on channel: %d \n\r", i);
       start_time = millis();
       end_time = millis();
-//      radio.openWritingPipe(myAddresses[(my_node_index + 1) % 6].address);
-//      radio.openReadingPipe(1, myAddresses[0].address);
-//      radio.startListening();
-      for (int i = 1; i < 7; i++)
-      {
-        radio.openReadingPipe(i, myAddresses[i - 1].address);
-      }  
+      radio.openWritingPipe(myAddresses[1].address);
+      radio.openReadingPipe(1,myAddresses[0].address);
       radio.startListening();
+//      for (int i = 1; i < 7; i++)
+//      {
+//        radio.openReadingPipe(i, myAddresses[i - 1].address);
+//      }  
+//      radio.startListening();
       while (start_time + 2000 > end_time)
       {
         if (radio.available())
@@ -506,24 +510,24 @@ void scanChannels() {
         Serial.println(receive_broadcast[i]);
       }
       Serial.println(receive_broadcast[5]);
-//      if (receive_broadcast[5] == i)
-//      {
-//        found_channel = true;
-//        channel = i;
-//        Serial.println("channel set to: " + i);
-//      }
-      if (receive_broadcast[4] == 66)
+      if (receive_broadcast[5] == i)
       {
-        channel = receive_broadcast[5];
         found_channel = true;
-        Serial.println("channel set to: " + channel);
+        channel = i;
+        Serial.println("channel set to: " + i);
       }
+//      if (receive_broadcast[4] == 66)
+//      {
+//        channel = receive_broadcast[5];
+//        found_channel = true;
+//        Serial.println("channel set to: " + channel);
+//      }
       else
         Serial.println("Failed to authenticate");
     }
     i--;
     if (i<0)
-      i = 50;
+      i = 127;
   }
 }
 /*****************************************************************************************************/
