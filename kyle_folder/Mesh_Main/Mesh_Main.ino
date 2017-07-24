@@ -14,7 +14,7 @@
 
 RF24 radio(9, 10);
 
-#define my_node_index 2//Change this to your respective address index 
+#define my_node_index 5//Change this to your respective address index 
 
 //Structs
 struct addressBook {
@@ -428,7 +428,7 @@ void broadcastMessage()
 //  {
 //    radio.openWritingPipe(myAddresses[i].address);
 //  }
-//  radio.stopListening();
+  radio.stopListening();
   radio.openWritingPipe(myAddresses[(my_node_index + 1) % 6].address);
   radio.write(&broadcastMessage, sizeof(broadcastMessage)); //Broadcast message to update connections
   radio.startListening();
