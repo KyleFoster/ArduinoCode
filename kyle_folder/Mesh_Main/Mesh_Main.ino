@@ -14,7 +14,7 @@
 
 RF24 radio(9, 10);
 
-#define my_node_index 4 //Change this to your respective address index 
+#define my_node_index 2//Change this to your respective address index 
 
 //Structs
 struct addressBook {
@@ -54,10 +54,10 @@ void setup()
   printf_begin();
   radio.begin();
   radio.enableDynamicPayloads();
-  radio.enableAckPayload();
-  radio.setAutoAck(true);
   randomSeed(analogRead(0));
   radio.setChannel(50);
+  radio.setRetries(15,15);
+  radio.printDetails();
 
   /*Scan or set to random channel between 0-127*/
   /*char user_input[5] = "";
@@ -91,9 +91,9 @@ void setup()
   /*******************************************/
 
   /* Open all the reading pipes */
-  for (int i = 1; i < 7; i++)
+  for (int i = 0; i < 6; i++)
   {
-    radio.openReadingPipe(i, myAddresses[i - 1].address);
+    radio.openReadingPipe(i, myAddresses[i].address);
   }
   radio.startListening();
 
@@ -134,11 +134,11 @@ void loop()
     }
     else
     {
-      if (currentMillis - previousMillis > 1000)
+      if (currentMillis - previousMillis > 5000)
       {
         already_broadcast = false;
         previousMillis = currentMillis;
-        random_interval = random(0, 1000);
+        random_interval = random(0, 5000);
       }
       if (currentMillis - previousMillis > random_interval && !already_broadcast)
       {
@@ -197,6 +197,9 @@ void messageDecide(RadioHeader &message_header, int to_node_index, int from_node
   {
     Serial.println("/////////GARBAGE ALERT!!!////////////");
     radio.begin();
+    radio.enableDynamicPayloads();
+    radio.setChannel(50);
+    radio.setRetries(15,15);
     for (int i = 1; i < 7; i++)
     {
       radio.openReadingPipe(i, myAddresses[i - 1].address);
@@ -421,12 +424,12 @@ void broadcastMessage()
 
 //  radio.openWritingPipe(myAddresses[3].address);
 //  radio.openReadingPipe(1, myAddresses[4].address);
-  for (int i = 0; i < 6; i++)
-  {
-    radio.openWritingPipe(myAddresses[i].address);
-  }
-  radio.stopListening();
-  //radio.openWritingPipe(myAddresses[(my_node_index + 1) % 6].address);
+//  for (int i = 0; i < 6; i++)
+//  {
+//    radio.openWritingPipe(myAddresses[i].address);
+//  }
+//  radio.stopListening();
+  radio.openWritingPipe(myAddresses[(my_node_index + 1) % 6].address);
   radio.write(&broadcastMessage, sizeof(broadcastMessage)); //Broadcast message to update connections
   radio.startListening();
 }
