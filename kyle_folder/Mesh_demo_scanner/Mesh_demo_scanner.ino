@@ -1,6 +1,6 @@
 /**
    Wireless Mesh Network Protocol.
-   @version 1.0
+   @version 42.0
    @authors The Gaurdian Angels
 */
 
@@ -14,7 +14,7 @@
 
 RF24 radio(9, 10);
 
-#define my_node_index 3//Change this to your respective address index 
+#define my_node_index 2 //Change this to your respective address index 
 
 //Structs
 struct addressBook {
@@ -55,12 +55,21 @@ void setup()
   radio.begin();
   radio.enableDynamicPayloads();
   randomSeed(analogRead(0));
-  radio.setChannel(50);
+  //radio.setChannel(50);
   radio.setRetries(15,15);
   radio.printDetails();
 
+  int j=0;
+  for(int i=1; i<6; i++){
+    if(j==my_node_index)
+      j++;
+    radio.openReadingPipe(i, myAddresses[j].address);
+    j++;
+  }
+  radio.startListening();
+
   /*Scan or set to random channel between 0-127*/
-  /*char user_input[5] = "";
+  char user_input[5] = "";
   Serial.println();
   Serial.println("Enter 1 for a random channel between 0-127, enter 2 to set your channel, enter 3 to scan for channels: ");
 
@@ -87,17 +96,10 @@ void setup()
     scanChannels();
   }
   printf("Channel set to: %d\n\r", channel);
-  radio.setChannel(channel);*/
+  radio.setChannel(channel);
   /*******************************************/
-
-  /* Open all the reading pipes */
-//  for (int i = 0; i < 6; i++)
-//  {
-//    radio.openReadingPipe(i, myAddresses[i].address);
-//  }
-  radio.openReadingPipe(0, myAddresses[0].address);
-  radio.startListening();
-
+  
+  Serial.println(F("--------------------------------------------------------------------------"));
   /* Print out contact list */
   Serial.println(F("Address Book:\n\r"));
   for (int i = 0; i < 6; i++)
@@ -156,8 +158,6 @@ void loop()
 /************************************receiveMessage()*************************************************/
 void receiveMessage()
 {
-  Serial.println(F("In receiveMessage"));
-
   int final_node_index = 6, to_node_index = 6, from_node_index = 6;
   RadioHeader receive_header = {0, 0, 0, 5, '\0'};
 
@@ -166,6 +166,7 @@ void receiveMessage()
   receive_header = {received_message[0], received_message[1], received_message[2], received_message[3], received_message[4]};
 
   //Check that we are receiving messages, delete later
+  /*
   Serial.println("Addresses in receive message");
   Serial.print(receive_header.to_address, HEX);
   Serial.print(receive_header.from_address, HEX);
@@ -173,7 +174,8 @@ void receiveMessage()
   Serial.print(receive_header.ttl);
   Serial.print(receive_header.message_type);
   Serial.print("\n");
-
+  */
+  
   //Find indicies
   for (int i = 0; i < 6; i++)
   {
@@ -192,18 +194,19 @@ void receiveMessage()
 /************************************messageDecide()**************************************************/
 void messageDecide(RadioHeader &message_header, int to_node_index, int from_node_index, int final_node_index)
 {
-  Serial.println(F("Inside messageDecide"));
   //Check for garbage first
   if (message_header.message_type != 'M' && message_header.message_type != 'B')
   {
-    Serial.println("/////////GARBAGE ALERT!!!////////////");
     radio.begin();
     radio.enableDynamicPayloads();
     radio.setChannel(50);
     radio.setRetries(15,15);
-    for (int i = 1; i < 7; i++)
-    {
-      radio.openReadingPipe(i, myAddresses[i - 1].address);
+    int j=0;
+    for(int i=1; i<6; i++){
+      if(j==my_node_index)
+        j++;
+      radio.openReadingPipe(i, myAddresses[j].address);
+      j++;
     }
     radio.startListening();
   }
@@ -212,13 +215,12 @@ void messageDecide(RadioHeader &message_header, int to_node_index, int from_node
   {
     if (message_header.final_address == myAddresses[my_node_index].address && message_header.message_type == 'M') //Message for you to read
     {
-      printf("\n----------------------------------------");
       printf("%s: ", myAddresses[from_node_index].userName.c_str());
       for (int i = 5; i < 32; i++)
       {
         printf("%c", received_message[i]);
       }
-      printf("----------------------------------------\n");
+      printf("\n");
     }
     else if (message_header.final_address != myAddresses[my_node_index].address && message_header.message_type == 'M') //Message you need to relay
     {
@@ -240,12 +242,11 @@ void messageDecide(RadioHeader &message_header, int to_node_index, int from_node
 /*****************************************relayMessage()**********************************************/
 void relayMessage(int final_node_index, int from_node_index)
 {
-  Serial.println(F("Inside relayMessage"));
   int to_node_index = checkConnection(final_node_index, from_node_index);
   received_message[0] = myAddresses[to_node_index].address; // change to_address to your best connection
   received_message[3]--; // decrement ttl
   radio.stopListening();
-  radio.openWritingPipe(myAddresses[to_node_index].address);
+  radio.openWritingPipe(myAddresses[my_node_index].address);
   radio.write(&received_message, sizeof(received_message));
   radio.startListening();
 }
@@ -255,8 +256,6 @@ void relayMessage(int final_node_index, int from_node_index)
 /******************************************updateTable()****************************************************/
 void updateTable(int table_index)
 {
-  Serial.println(F("Inside updateTable"));
-
   bool has_five = false;
   int buffer_position = c_t[table_index].value;
 
@@ -299,17 +298,6 @@ void updateTable(int table_index)
       }
     }
   }
-  /* Print c_t */
-  for (int i = 0; i < 6; i++)
-  {
-    printf("%i ", c_t[i].value);
-  }
-  printf("\n");
-  for (int i = 0; i < 6; i++)
-  {
-    printf("%i ", c_t[i].updates_til_reset);
-  }
-  Serial.println();
 }
 /*****************************************************************************************************/
 
@@ -317,8 +305,6 @@ void updateTable(int table_index)
 /*************************************sendMessage()***************************************************/
 void sendMessage(RadioHeader &sendHeader)
 {
-  Serial.println(F("Inside sendMessage"));
-
   int final_node_index;
   char send_payload[32] = "";
   uint8_t totalMessage[32];
@@ -327,7 +313,6 @@ void sendMessage(RadioHeader &sendHeader)
   memset(totalMessage, 0, 32);
 
   Serial.readBytesUntil('\n', send_payload, 32);
-  Serial.println(send_payload);
 
   totalMessage[0] = sendHeader.to_address;
   totalMessage[1] = sendHeader.from_address;
@@ -349,7 +334,7 @@ void sendMessage(RadioHeader &sendHeader)
   }
 
   radio.stopListening();
-  radio.openWritingPipe(sendHeader.to_address);
+  radio.openWritingPipe(myAddresses[my_node_index].address);
   radio.write(&totalMessage, sizeof(totalMessage));
   Serial.print(myAddresses[my_node_index].userName);
   Serial.print(" -> ");
@@ -364,8 +349,6 @@ void sendMessage(RadioHeader &sendHeader)
 /********************************************readUserInput()******************************************/
 RadioHeader readUserInput()
 {
-  Serial.println(F("Inside readUserInput"));
-
   char prefix[10];
   int final_node_index = 6, to_node_index = 6;
   RadioHeader returnHeader = {myAddresses[my_node_index].address, myAddresses[my_node_index].address, myAddresses[my_node_index].address, 5, 'q'};
@@ -421,18 +404,8 @@ void broadcastMessage()
   broadcastMessage[4] = 'B';
   broadcastMessage[5] = channel;
 
-  Serial.println(F("Broadcasting...\n"));
-
-//  radio.openWritingPipe(myAddresses[3].address);
-//  radio.openReadingPipe(1, myAddresses[4].address);
-//  for (int i = 0; i < 6; i++)
-//  {
-//    radio.openWritingPipe(myAddresses[i].address);
-//  }
   radio.stopListening();
-  //radio.openWritingPipe(myAddresses[(my_node_index + 1) % 6].address);
   radio.openWritingPipe(myAddresses[my_node_index].address);
-  radio.openWritingPipe(myAddresses[0].address);
   radio.write(&broadcastMessage, sizeof(broadcastMessage)); //Broadcast message to update connections
   radio.startListening();
 }
@@ -442,8 +415,6 @@ void broadcastMessage()
 /***********************************checkConnection()*************************************************/
 int checkConnection(int final_node_index, int from_node_index)
 {
-  Serial.println(F("Inside checkConnection"));
-
   int to_node_index = 6;
   int checkValue = 1;
 
@@ -469,7 +440,7 @@ int checkConnection(int final_node_index, int from_node_index)
       Serial.println(F("You are not connected to the mesh."));
     }
   }
-  printf("to_node_index: %i\n", to_node_index);
+
   return to_node_index;
 }
 /*****************************************************************************************************/
@@ -477,16 +448,11 @@ int checkConnection(int final_node_index, int from_node_index)
 
 /*************************************scanChannels()**************************************************/
 void scanChannels() {
-  for (int i = 1; i < 7; i++)
-  {
-    radio.openReadingPipe(i, myAddresses[i - 1].address);
-  }
-  radio.startListening();
-
-  //Serial.println("searching for channels...");
+  Serial.println("searching for channels...");
   int i = 127;
   int end_time = 0;
   int start_time = 0;
+  bool read_message = false;
   bool found_channel = false;
   uint8_t receive_broadcast[6] = {200, 200, 200, 200, 200, 200};
 
@@ -501,20 +467,14 @@ void scanChannels() {
       printf("Checking message on channel: %d \n\r", i);
       start_time = millis();
       end_time = millis();
-//      radio.openWritingPipe(myAddresses[4].address);
-//      radio.openReadingPipe(1, myAddresses[3].address);
-//      radio.startListening();
-      for (int i = 1; i < 7; i++)
-      {
-        radio.openReadingPipe(i, myAddresses[i - 1].address);
-      }
       radio.startListening();
       while (start_time + 2000 > end_time)
       {
-        if (radio.available())
+        if (radio.available() && !read_message)
         {
           Serial.println("reading...");
           radio.read(&receive_broadcast, sizeof(receive_broadcast));
+          read_message = true;
         }
         end_time = millis();
       }
@@ -522,21 +482,19 @@ void scanChannels() {
       {
         Serial.println(receive_broadcast[j]);
       }
-      Serial.println("Received Channel: " + receive_broadcast[5]);
+      printf("Received Channel: %u \n\r", receive_broadcast[5]);
+      
       if (receive_broadcast[5] == i)
       {
         found_channel = true;
         channel = i;
         Serial.println("channel set to: " + i);
       }
-      //      if (receive_broadcast[4] == 66)
-      //      {
-      //        channel = receive_broadcast[5];
-      //        found_channel = true;
-      //        Serial.println("channel set to: " + channel);
-      //      }
       else
+      {
         Serial.println("Failed to authenticate");
+        read_message = false;
+      }
     }
     i--;
     if (i < 0)

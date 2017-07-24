@@ -1,6 +1,6 @@
 /**
    Wireless Mesh Network Protocol.
-   @version 1.0
+   @version 42.0
    @authors The Gaurdian Angels
 */
 
@@ -58,6 +58,7 @@ void setup()
   radio.setChannel(50);
   radio.setRetries(15,15);
   radio.printDetails();
+  radio.setPALevel(RF24_PA_MIN);
 
   /*Scan or set to random channel between 0-127*/
   /*char user_input[5] = "";
@@ -91,13 +92,21 @@ void setup()
   /*******************************************/
 
   /* Open all the reading pipes */
-//  for (int i = 0; i < 6; i++)
-//  {
-//    radio.openReadingPipe(i, myAddresses[i].address);
-//  }
-  radio.openReadingPipe(0, myAddresses[0].address);
+  /*
+  for (int i = 0; i < 6; i++)
+  {
+    radio.openReadingPipe(i, myAddresses[i].address);
+  }
   radio.startListening();
-
+  */
+  int j=0;
+  for(int i=1; i<6; i++){
+    if(j==my_node_index)
+      j++;
+    radio.openReadingPipe(i, myAddresses[j].address);
+    j++;
+  }
+  radio.startListening();
   /* Print out contact list */
   Serial.println(F("Address Book:\n\r"));
   for (int i = 0; i < 6; i++)
@@ -201,9 +210,12 @@ void messageDecide(RadioHeader &message_header, int to_node_index, int from_node
     radio.enableDynamicPayloads();
     radio.setChannel(50);
     radio.setRetries(15,15);
-    for (int i = 1; i < 7; i++)
-    {
-      radio.openReadingPipe(i, myAddresses[i - 1].address);
+    int j=0;
+    for(int i=1; i<6; i++){
+      if(j==my_node_index)
+        j++;
+      radio.openReadingPipe(i, myAddresses[j].address);
+      j++;
     }
     radio.startListening();
   }
@@ -245,7 +257,7 @@ void relayMessage(int final_node_index, int from_node_index)
   received_message[0] = myAddresses[to_node_index].address; // change to_address to your best connection
   received_message[3]--; // decrement ttl
   radio.stopListening();
-  radio.openWritingPipe(myAddresses[to_node_index].address);
+  radio.openWritingPipe(myAddresses[my_node_index].address);
   radio.write(&received_message, sizeof(received_message));
   radio.startListening();
 }
@@ -349,7 +361,7 @@ void sendMessage(RadioHeader &sendHeader)
   }
 
   radio.stopListening();
-  radio.openWritingPipe(sendHeader.to_address);
+  radio.openWritingPipe(myAddresses[my_node_index].address);
   radio.write(&totalMessage, sizeof(totalMessage));
   Serial.print(myAddresses[my_node_index].userName);
   Serial.print(" -> ");
@@ -432,7 +444,6 @@ void broadcastMessage()
   radio.stopListening();
   //radio.openWritingPipe(myAddresses[(my_node_index + 1) % 6].address);
   radio.openWritingPipe(myAddresses[my_node_index].address);
-  radio.openWritingPipe(myAddresses[0].address);
   radio.write(&broadcastMessage, sizeof(broadcastMessage)); //Broadcast message to update connections
   radio.startListening();
 }

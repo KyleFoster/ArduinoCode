@@ -91,13 +91,21 @@ void setup()
   /*******************************************/
 
   /* Open all the reading pipes */
-//  for (int i = 0; i < 6; i++)
-//  {
-//    radio.openReadingPipe(i, myAddresses[i].address);
-//  }
-  radio.openReadingPipe(0, myAddresses[0].address);
+  /*
+  for (int i = 0; i < 6; i++)
+  {
+    radio.openReadingPipe(i, myAddresses[i].address);
+  }
   radio.startListening();
-
+  */
+  int j=0;
+  for(int i=1; i<6; i++){
+    if(j==my_node_index)
+      j++;
+    radio.openReadingPipe(i, myAddresses[j].address);
+    j++;
+  }
+  radio.startListening();
   /* Print out contact list */
   Serial.println(F("Address Book:\n\r"));
   for (int i = 0; i < 6; i++)
@@ -432,7 +440,6 @@ void broadcastMessage()
   radio.stopListening();
   //radio.openWritingPipe(myAddresses[(my_node_index + 1) % 6].address);
   radio.openWritingPipe(myAddresses[my_node_index].address);
-  radio.openWritingPipe(myAddresses[0].address);
   radio.write(&broadcastMessage, sizeof(broadcastMessage)); //Broadcast message to update connections
   radio.startListening();
 }
