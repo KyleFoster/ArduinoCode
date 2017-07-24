@@ -14,7 +14,7 @@
 
 RF24 radio(9, 10);
 
-#define my_node_index 1//Change this to your respective address index 
+#define my_node_index 3//Change this to your respective address index 
 
 //Structs
 struct addressBook {
@@ -333,11 +333,13 @@ RadioHeader readUserInput()
   }
   else if (String(prefix) == "PrintCT") //print connection table
   {
+    Serial.println(F("You are connected to: "));
     for (int i = 0; i < 6; i++)
     {
-      printf("%i ", c_t[i].value);
+      if( c_t[i].value > 0){
+        printf("  %s\n", myAddresses[i].userName.c_str());
+      }
     }
-    printf("\n");
     Serial.flush();
   }
   else
