@@ -18,13 +18,19 @@ void setup() {
   radio.setRetries(15, 15);
   radio.startListening();
   radio.setChannel(90);
+
+  for (int i = 1; i < 6; i++)
+  {
+    radio.openReadingPipe(i, pipes[i - 1]);
+  }
+  radio.startListening();
 }
 
 void loop() {
-  char scene = "0";
+  char scene = '0';
   while (!radio.available()) { } 
   radio.read(&scene, sizeof(scene));
-  if (scene == "4")
+  if (scene == '4')
     sceneFour();
   else 
     delay(10);
