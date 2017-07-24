@@ -57,9 +57,10 @@ void setup()
   radio.enableAckPayload();
   radio.setAutoAck(true);
   randomSeed(analogRead(0));
+  radio.setChannel(50);
 
   /*Scan or set to random channel between 0-127*/
-  char user_input[5] = "";
+  /*char user_input[5] = "";
   Serial.println();
   Serial.println("Enter 1 for a random channel between 0-127, enter 2 to set your channel, enter 3 to scan for channels: ");
 
@@ -86,7 +87,7 @@ void setup()
     scanChannels();
   }
   printf("Channel set to: %d\n\r", channel);
-  radio.setChannel(channel);
+  radio.setChannel(channel);*/
   /*******************************************/
 
   /* Open all the reading pipes */
@@ -470,8 +471,10 @@ int checkConnection(int final_node_index, int from_node_index)
 
 /*************************************scanChannels()**************************************************/
 void scanChannels() {
-  radio.openWritingPipe(myAddresses[4].address);
-  radio.openReadingPipe(1, myAddresses[3].address);
+  for (int i = 1; i < 7; i++)
+  {
+    radio.openReadingPipe(i, myAddresses[i - 1].address);
+  }
   radio.startListening();
 
   //Serial.println("searching for channels...");
