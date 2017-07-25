@@ -22,6 +22,12 @@ void setup() {
   radio.setRetries(15, 15);
   radio.startListening();
   radio.setChannel(90);
+
+  for (int i = 0; i < 5; i++)
+  {
+    radio.openWritingPipe(pipes[i]);
+  }
+  radio.stopListening();
 }
 
 void loop() {
@@ -79,8 +85,8 @@ void sceneTwo() {
 
 void sceneThree() {
   Serial.println("In scene three");  
-  radio.openWritingPipe(pipe[4]); //open pope to address of node 5
-  radio.stopListening();
+//  radio.openWritingPipe(pipes[4]); //open pipe to address of node 5
+//  radio.stopListening();
   char message[35] = "";
   memset(message, 0, 35);
   Serial.print("Enter a message: ");
@@ -94,7 +100,7 @@ void sceneThree() {
 
 void sceneFour() {
   Serial.println("In scene four");  
-  radio.openWritingPipe(pipe[4]); //open pope to address of node 5
+  radio.openWritingPipe(pipes[4]); //open pipe to address of node 5
   radio.stopListening();
   char message[35] = "";
   memset(message, 0, 35);

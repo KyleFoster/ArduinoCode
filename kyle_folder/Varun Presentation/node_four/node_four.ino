@@ -41,10 +41,11 @@ void sceneThree() {
   Serial.println("In scene three");
   char message[32] = "";
   memset(message, 0, 32);
+  while (!radio.available()) { } 
   radio.read(&message, sizeof(message));
-  //String m = String(message);
+  String m = String(message);
   printf("Node1 -> Node4\n\r");
-  printf("%s\n\r", message);
+  Serial.println("Message: " + m);
 }
 
 
