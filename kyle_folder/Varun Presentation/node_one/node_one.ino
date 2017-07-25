@@ -7,10 +7,9 @@
 
 RF24 radio(9,10);
 
-const uint64_t pipes[5] = { 0xF0F0F0F0A1LL, 0xF0F0F0F0B2LL, 0xF0F0F0F0C3LL,
-                            0xF0F0F0F0D4L, 0xF0F0F0F0E5LL };
+const uint64_t pipes[5] = { 0xF0F0F0F0A1LL, 0xF0F0F0F0B2LL, 0xF0F0F0F0C3LL};
 
-                          //node 1, node 2, node 3, node 4, node 5
+                          //node 1, node 4, node 5
 
 char input[5];
 
@@ -20,14 +19,10 @@ void setup() {
   radio.begin();
   radio.enableDynamicPayloads();
   radio.setRetries(15, 15);
-  radio.startListening();
   radio.setChannel(90);
 
-  for (int i = 0; i < 5; i++)
-  {
-    radio.openWritingPipe(pipes[i]);
-  }
   radio.stopListening();
+  radio.openWritingPipe(pipes[0]); //open pipe to address of node 4 
 }
 
 void loop() {
@@ -55,6 +50,8 @@ void loop() {
     {
       sceneFour();
     }
+    else if (scene == "5")
+      sceneFive();
     else 
     {
       Serial.println("Retry...");
@@ -65,8 +62,6 @@ void loop() {
 
 void sceneOne() {
   Serial.println("In scene one");
-  radio.openWritingPipe(pipes[3]); //open pipe to address of node 4 
-  radio.stopListening();
   char message[35] = "";
   memset(message, 0, 35);
   Serial.print("Enter a message: ");
@@ -75,6 +70,7 @@ void sceneOne() {
   String m = String(message);
   Serial.println(m);
   radio.write("1", sizeof("1"));
+  delay(10);
   radio.write(&message, sizeof(message));
 }
 
@@ -85,8 +81,6 @@ void sceneTwo() {
 
 void sceneThree() {
   Serial.println("In scene three");  
-//  radio.openWritingPipe(pipes[4]); //open pipe to address of node 5
-//  radio.stopListening();
   char message[35] = "";
   memset(message, 0, 35);
   Serial.print("Enter a message: ");
@@ -95,13 +89,12 @@ void sceneThree() {
   String m = String(message);
   Serial.println(m);
   radio.write("3", sizeof("3"));
+  delay(10);
   radio.write(&message, sizeof(message)); 
 }
 
 void sceneFour() {
   Serial.println("In scene four");  
-  radio.openWritingPipe(pipes[4]); //open pipe to address of node 5
-  radio.stopListening();
   char message[35] = "";
   memset(message, 0, 35);
   Serial.print("Enter a message: ");
@@ -110,5 +103,20 @@ void sceneFour() {
   String m = String(message);
   Serial.println(m);
   radio.write("4", sizeof("4"));
+  delay(10);
+  radio.write(&message, sizeof(message)); 
+}
+
+
+void sceneFive() {
+  Serial.println("In scene five");  
+  char message[35] = "";
+  memset(message, 0, 35);
+  Serial.print("Enter a message: ");
+  while (!Serial.available()) { }
+  Serial.readBytesUntil("\n", message, 35);
+  String m = String(message);
+  Serial.println(m);
+  radio.write("5", sizeof("5"));
   radio.write(&message, sizeof(message)); 
 }

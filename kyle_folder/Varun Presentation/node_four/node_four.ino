@@ -7,8 +7,7 @@
 
 RF24 radio(9,10);
 
-const uint64_t pipes[5] = { 0xF0F0F0F0A1LL, 0xF0F0F0F0B2LL, 0xF0F0F0F0C3LL,
-                            0xF0F0F0F0D4L, 0xF0F0F0F0E5LL };
+const uint64_t pipes[3] = { 0xF0F0F0F0A1LL, 0xF0F0F0F0B2LL, 0xF0F0F0F0C3LL};
 
 void setup() {
   Serial.begin(38400);
@@ -16,13 +15,11 @@ void setup() {
   radio.begin();
   radio.enableDynamicPayloads();
   radio.setRetries(15, 15);
-  radio.startListening();
   radio.setChannel(90);
 
-  for (int i = 1; i < 6; i++)
-  {
-    radio.openReadingPipe(i, pipes[i - 1]);
-  }
+  radio.openReadingPipe(0, pipes[0]);
+  radio.openReadingPipe(1, pipes[1]);
+  radio.openReadingPipe(2, pipes[2]);
   radio.startListening();
 }
 
@@ -30,15 +27,15 @@ void loop() {
   char scene = '0';
   while (!radio.available()) { } 
   radio.read(&scene, sizeof(scene));
-  if (scene == '3')
-    sceneThree();
+  if (scene == '1')
+    sceneOne();
   else 
     delay(10);
     //do nothing
 }
 
-void sceneThree() {
-  Serial.println("In scene three");
+void sceneOne() {
+  Serial.println("In scene One");
   char message[32] = "";
   memset(message, 0, 32);
   while (!radio.available()) { } 
