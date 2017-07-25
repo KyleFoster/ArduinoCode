@@ -20,9 +20,17 @@ void setup() {
   radio.enableDynamicPayloads();
   radio.setRetries(15, 15);
   radio.setChannel(90);
+  radio.printDetails();
+  radio.setAutoAck(false);
+
+  
+  radio.openReadingPipe(0, pipes[0]);
+  radio.openReadingPipe(1, pipes[1]);
+  radio.openReadingPipe(2, pipes[2]);
+  radio.startListening();
 
   radio.stopListening();
-  radio.openWritingPipe(pipes[0]); //open pipe to address of node 4 
+  radio.openWritingPipe(pipes[0]); //open pipe to address of node 
 }
 
 void loop() {

@@ -30,7 +30,7 @@ void loop() {
   if (scene == '1')
     sceneOne();
   else 
-    delay(10);
+    int x = 5;
     //do nothing
 }
 
