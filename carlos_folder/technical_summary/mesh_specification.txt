@@ -30,7 +30,7 @@ The 'broadcast' routine maintains the chronological stack and therefore maintain
 
 Due to the potential latency involved with the natural redundancy of a mesh network, path optimization and route reliability need to be addressed. To do so the protocol leverages the 'direct routing priority' and its chronological stack. The protocol first checks the stack to see if it has recently been connected to the destination node, if so, the message is sent directly, if not, the message is forwarded on to node(1) on the stack. Like before, if node(1) is no longer connected before the  'broadcast' routine has a chance to update the stack, the message will be forwarded to the next available node.
 
-The features of this protocol allow it to keep itself up to date with the local topology and adjust for changes at a rate equal to the frequency of the 'broadcast' method. This protocol lays a foundation consisting of the requisite behavior of a rudimentary half-duplex mesh network and given more processing power or a chip supporting multiple parallel processes, the exisiting features can easily be richened to provide a even more effective platform. 
+The properties of this protocol allow it to keep itself up to date with the local topology and adjust for changes at a rate equal to the frequency of the 'broadcast' method. This protocol lays a foundation consisting of the requisite behavior of a rudimentary half-duplex mesh network and given more processing power or a chip supporting multiple parallel processes, the exisiting features can easily be richened to provide a even more effective platform. 
 
 
 
