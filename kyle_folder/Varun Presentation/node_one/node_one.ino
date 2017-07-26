@@ -126,5 +126,6 @@ void sceneFive() {
   String m = String(message);
   Serial.println(m);
   radio.write("5", sizeof("5"));
+  delay(10);
   radio.write(&message, sizeof(message)); 
 }

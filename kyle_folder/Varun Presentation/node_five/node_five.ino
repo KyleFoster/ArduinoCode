@@ -17,14 +17,15 @@ void setup() {
   radio.setRetries(15, 15);
   radio.setChannel(90);
 
-  radio.openReadingPipe(0, pipes[0]);
+  radio.openReadingPipe(0, pipes[2]);
   radio.openReadingPipe(1, pipes[1]);
-  radio.openReadingPipe(2, pipes[2]);
+  radio.openReadingPipe(2, pipes[0]);
   radio.startListening();
 }
 
 void loop() {
   char scene = '0';
+  char trash[32] = "";
   while (!radio.available()) { } 
   radio.read(&scene, sizeof(scene));
   if (scene == '3')
@@ -34,17 +35,16 @@ void loop() {
   else if (scene == '5')
     sceneFive();
   else 
-    delay(10);
-    //do nothing
+  {
+    radio.read(&trash, sizeof(trash));
+    String t = String(t);
+    Serial.println("Trash: " + t);
+  }
 }
 
 void sceneThree() {
   Serial.println("In scene three");
-  char message[32] = "";
-  memset(message, 0, 32);
-  while (!radio.available()) { } 
-  radio.read(&message, sizeof(message));
-  String m = String(message);
+  String m = receiveMessage();
   printf("Node1 -> Node4 -> Node5\n\r");
   Serial.println("Message: " + m);
 }
@@ -52,11 +52,7 @@ void sceneThree() {
 
 void sceneFour() {
   Serial.println("In scene four");
-  char message[32] = "";
-  memset(message, 0, 32);
-  while (!radio.available()) { } 
-  radio.read(&message, sizeof(message));
-  String m = String(message);
+  String m = receiveMessage();
   printf("Node1 -> Node2 -> Node3 -> Node5\n\r");
   Serial.println("Message: " + m);
 }
@@ -64,11 +60,17 @@ void sceneFour() {
 
 void sceneFive() {
   Serial.println("In scene five");
+  String m = receiveMessage();
+  printf("Node1 -> Node4 -> Node3 -> Node5\n\r");
+  Serial.println("Message: " + m);
+}
+
+String receiveMessage(){
   char message[32] = "";
   memset(message, 0, 32);
   while (!radio.available()) { } 
   radio.read(&message, sizeof(message));
   String m = String(message);
-  printf("Node1 -> Node4 -> Node3 -> Node5\n\r");
-  Serial.println("Message: " + m);
+  return m; 
 }
+

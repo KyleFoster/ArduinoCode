@@ -25,13 +25,17 @@ void setup() {
 
 void loop() {
   char scene = '0';
+  char trash[32] = "";
   while (!radio.available()) { } 
   radio.read(&scene, sizeof(scene));
   if (scene == '1')
     sceneOne();
-  else 
-    int x = 5;
-    //do nothing
+  else
+  {
+    radio.read(&trash, sizeof(trash));
+    String t = String(t);
+    Serial.println("Trash: " + t);
+  }
 }
 
 void sceneOne() {
