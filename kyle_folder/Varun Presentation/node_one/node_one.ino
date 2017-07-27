@@ -7,7 +7,7 @@
 
 RF24 radio(9,10);
 
-const uint64_t pipes[5] = { 0xF0F0F0F0A1LL, 0xF0F0F0F0B2LL, 0xF0F0F0F0C3LL};
+const uint64_t pipes[3] = { 0xF0F0F0F0A1LL, 0xF0F0F0F0B2LL, 0xF0F0F0F0C3LL};
 
                           //node 1, node 4, node 5
 
