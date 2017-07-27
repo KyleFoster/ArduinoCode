@@ -397,11 +397,12 @@ RadioHeader readUserInput()
   }
   else if (p == "PrintCT") //print connection table
   {
+    Serial.println(F("You are connnected to: "));
     for (int i = 0; i < 6; i++)
     {
-      printf("%i ", c_t[i].value);
+      if(c_t[i].value>0)
+        printf("  %s\n", myAddresses[i].userName.c_str());
     }
-    printf("\n");
     Serial.flush();
   }
   else if (p == "DisconnectAbby" || p == "DisconnectCarlos" || p == "DisconnectKyle" ||
