@@ -141,7 +141,7 @@ void receiveMessage()
   receive_header = {received_message[0], received_message[1], received_message[2], received_message[3], received_message[4]};
 
   //Check that we are receiving messages, delete later
-  
+  /*
   Serial.println("Addresses in receive message");
   Serial.print(receive_header.to_address, HEX);
   Serial.print(receive_header.from_address, HEX);
@@ -149,7 +149,7 @@ void receiveMessage()
   Serial.print(receive_header.ttl);
   Serial.print(receive_header.message_type);
   Serial.print("\n");
-  
+  */
   
   //Find indicies
   for (int i = 0; i < 6; i++)
@@ -289,7 +289,6 @@ void updateTable(int table_index)
 /*************************************sendMessage()***************************************************/
 void sendMessage(RadioHeader &sendHeader)
 {
-  Serial.println(F("Entering Send Message"));
   int final_node_index;
   char send_payload[32] = "";
   uint8_t totalMessage[32];
@@ -298,7 +297,6 @@ void sendMessage(RadioHeader &sendHeader)
   memset(totalMessage, 0, 32);
 
   Serial.readBytesUntil('\n', send_payload, 32);
-  Serial.println(send_payload);
 
   totalMessage[0] = sendHeader.to_address;
   totalMessage[1] = sendHeader.from_address;
@@ -309,7 +307,6 @@ void sendMessage(RadioHeader &sendHeader)
   for (int i = 5; i < 32; i++)
   {
     totalMessage[i] = send_payload[i - 5];
-    printf("%c", totalMessage[i]);
   }
   for (int i = 0; i < 6; i++)
   {
@@ -332,7 +329,6 @@ void sendMessage(RadioHeader &sendHeader)
   while(Serial.available()){
     Serial.read();
   }
-  Serial.println(F("Leaving Send Message"));
 }
 /*****************************************************************************************************/
 
