@@ -57,7 +57,7 @@ void setup()
   radio.enableDynamicPayloads();
   randomSeed(analogRead(0));
   radio.setChannel(50);
-  radio.setRetries(1,1);
+  radio.setRetries(1,5);
   radio.printDetails();
   radio.setAutoAck(false);
 
@@ -175,7 +175,7 @@ void messageDecide(RadioHeader &message_header, int to_node_index, int from_node
     radio.begin();
     radio.enableDynamicPayloads();
     radio.setChannel(50);
-    radio.setRetries(1,1);
+    radio.setRetries(1,5);
     radio.setAutoAck(false);
     int j=0;
     for(int i=1; i<6; i++){
@@ -192,7 +192,6 @@ void messageDecide(RadioHeader &message_header, int to_node_index, int from_node
     if (message_header.final_address == myAddresses[my_node_index].address && message_header.message_type == 'M') //Message for you to read
     {
       printf("%s: ", myAddresses[from_node_index].userName.c_str());
-      printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
       for (int i = 5; i < 32; i++)
       {
         printf("%c", received_message[i]);
