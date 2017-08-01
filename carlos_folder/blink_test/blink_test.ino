@@ -10,18 +10,14 @@ void setup() {
 
 void loop() {
 
-  ledAlert("route");
-  delay(2000);
-  ledAlert("offline");
-  delay(2000);
-  ledAlert("online");
-  delay(2000);
+  ledAlert("receive");
+  delay(5000);
   
 }
 
 void ledAlert(String mode) 
 {
-  if (mode == "route") 
+  if (mode == "relay") 
   {
     for (int i = 0; i <= 10; i++) 
     {
@@ -33,10 +29,17 @@ void ledAlert(String mode)
       digitalWrite(right, LOW);
     }
   } 
-  else if (mode == "online")
+  else if (mode == "receive")
   {
+    for (int i = 0; i <= 3; i++) 
+    {
     digitalWrite(left, HIGH);
     digitalWrite(right, HIGH);
+    delay(150);
+    digitalWrite(left, LOW);
+    digitalWrite(right, LOW);
+    delay(100);
+    }
   }
   else if (mode == "offline")
   {
@@ -51,3 +54,4 @@ void ledAlert(String mode)
     }
   }
 }
+
