@@ -14,7 +14,7 @@
 
 RF24 radio(9, 10);
 
-#define my_node_index 2 //Change this to your respective address index 
+#define my_node_index 1 //Change this to your respective address index 
 
 //Structs
 struct addressBook {
@@ -78,7 +78,7 @@ void setup()
   }
 
   Serial.println(F("\n\r- To Send a message:"));
-  Serial.println(F("Type user name, semicolon, then message.\n\reg: 'Alex;You are equally as garbage at chess.'"));
+  Serial.println(F("Type user name, semicolon, then message.\n\reg: 'Alex;Hello Alex.'"));
   Serial.println(F("------------Begin Chat-------------"));
 }
 /*****************************************************************************************************/
@@ -338,11 +338,12 @@ RadioHeader readUserInput()
   }
   else if (p == "PrintCT") //print connection table
   {
+    Serial.println(F("You are disconnected to: "));
     for (int i = 0; i < 6; i++)
     {
-      printf("%i ", c_t[i].value);
+      if(c_t[i].value>0)
+        printf("  %s\n", myAddresses[i].userName.c_str());
     }
-    printf("\n");
     Serial.flush();
   }
   else if (p == "RemoveAbby" || p == "RemoveCarlos" || p == "RemoveKyle" ||
