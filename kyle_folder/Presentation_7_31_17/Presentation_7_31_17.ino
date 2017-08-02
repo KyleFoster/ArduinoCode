@@ -1,4 +1,4 @@
-/**
+ /**
    Wireless Mesh Network Protocol.
    @version 42.0
    @authors The Guardian Angels
@@ -51,14 +51,16 @@ uint8_t received_message[32];
 /******************************************setup()****************************************************/
 void setup()
 {
-  Serial.begin(38400);
+  Serial.begin(9600);
   printf_begin();
   radio.begin();
   radio.enableDynamicPayloads();
   randomSeed(analogRead(0));
   radio.setChannel(50);
-  radio.setRetries(15,15);
+  radio.setRetries(1,5);
+  radio.setDataRate(RF24_250KBPS);
   radio.printDetails();
+  radio.setAutoAck(false);
 
   int j=0;
   for(int i=1; i<6; i++){
@@ -80,6 +82,10 @@ void setup()
   Serial.println(F("\n\r- To Send a message:"));
   Serial.println(F("Type user name, semicolon, then message.\n\reg: 'Alex;Hello Alex.'"));
   Serial.println(F("------------Begin Chat-------------"));
+
+  while(Serial.available()){
+    Serial.read();
+  }
 }
 /*****************************************************************************************************/
 
@@ -90,7 +96,7 @@ void loop()
   RadioHeader sendHeader;
   bool already_broadcast = false;
   unsigned long previousMillis = 0;
-  int random_interval = random(0, 5000);
+  int random_interval = random(0, 10000);
   unsigned long currentMillis = millis();
 
   while (!radio.available()) // Wait for incoming data/message
@@ -107,11 +113,11 @@ void loop()
     }
     else
     {
-      if (currentMillis - previousMillis > 5000)
+      if (currentMillis - previousMillis > 10000)
       {
         already_broadcast = false;
         previousMillis = currentMillis;
-        random_interval = random(0, 5000);
+        random_interval = random(0, 10000);
       }
       if (currentMillis - previousMillis > random_interval && !already_broadcast)
       {
@@ -136,7 +142,6 @@ void receiveMessage()
   receive_header = {received_message[0], received_message[1], received_message[2], received_message[3], received_message[4]};
 
   //Check that we are receiving messages, delete later
-  /*
   Serial.println("Addresses in receive message");
   Serial.print(receive_header.to_address, HEX);
   Serial.print(receive_header.from_address, HEX);
@@ -144,7 +149,6 @@ void receiveMessage()
   Serial.print(receive_header.ttl);
   Serial.print(receive_header.message_type);
   Serial.print("\n");
-  */
   
   //Find indicies
   for (int i = 0; i < 6; i++)
@@ -170,7 +174,9 @@ void messageDecide(RadioHeader &message_header, int to_node_index, int from_node
     radio.begin();
     radio.enableDynamicPayloads();
     radio.setChannel(50);
-    radio.setRetries(15,15);
+    radio.setRetries(1,5);
+    radio.setAutoAck(false);
+    radio.setDataRate(RF24_250KBPS);
     int j=0;
     for(int i=1; i<6; i++){
       if(j==my_node_index)
@@ -204,9 +210,13 @@ void messageDecide(RadioHeader &message_header, int to_node_index, int from_node
     {
       if (!c_t[from_node_index].disconnected)
         updateTable(from_node_index);
+      /*
       else
+         int x=5;
         Serial.println("currently disconnected from " + myAddresses[from_node_index].userName);
+      */
     }
+
   }
 }
 /*****************************************************************************************************/
@@ -315,6 +325,9 @@ void sendMessage(RadioHeader &sendHeader)
   Serial.print(": ");
   Serial.println(send_payload);
   radio.startListening();
+  while(Serial.available()){
+    Serial.read();
+  }
 }
 /*****************************************************************************************************/
 
@@ -333,29 +346,27 @@ RadioHeader readUserInput()
   //Decide what user wants to do and call appropriate functions
   if (p == "ChangeCH" || p == "ChangePA" || p == "ChangeRT")
   {
-    Serial.flush();
     //Carlos put change code here
   }
   else if (p == "PrintCT") //print connection table
   {
-    Serial.println(F("You are disconnected to: "));
+    Serial.println(F("You are connected to: "));
     for (int i = 0; i < 6; i++)
     {
       if(c_t[i].value>0)
         printf("  %s\n", myAddresses[i].userName.c_str());
     }
-    Serial.flush();
   }
   else if (p == "RemoveAbby" || p == "RemoveCarlos" || p == "RemoveKyle" ||
            p == "RemoveAlex" || p == "RemoveHarman" || p == "RemoveMalik") //disconnect from the person 
   {
-    Serial.println("Going to disconnectFrom()");
+    //Serial.println("Going to disconnectFrom()");
     disconnectFrom(p);  
   }
   else if (p == "ReconnectAbby" || p == "ReconnectCarlos" || p == "ReconnectKyle" ||
            p == "ReconnectAlex" || p == "ReconnectMalik" || p == "ReconnectHarman")
   {
-    Serial.println("Going to reconnectTo()");
+    //Serial.println("Going to reconnectTo()");
     reconnectTo(p);
   }
   else

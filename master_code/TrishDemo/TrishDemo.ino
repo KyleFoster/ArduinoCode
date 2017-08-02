@@ -1,7 +1,7 @@
 /**
    Wireless Mesh Network Protocol.
    @version 42.0
-   @authors The Guardian Angels
+   @authors The Gaurdian Angels
 */
 
 //Libraries
@@ -14,7 +14,7 @@
 
 RF24 radio(9, 10);
 
-#define my_node_index 2 //Change this to your respective address index 
+#define my_node_index 2//Change this to your respective address index 
 
 //Structs
 struct addressBook {
@@ -34,8 +34,7 @@ struct ConnectionTable
 {
   uint8_t value;
   uint8_t updates_til_reset;
-  bool disconnected;
-} c_t[6] = {{0, 10, false}, {0, 10, false}, {0, 10, false}, {0, 10, false}, {0, 10, false}, {0, 10, false}};
+} c_t[6] = {{0, 10}, {0, 10}, {0, 10}, {0, 10}, {0, 10}, {0, 10}};
 
 uint8_t channel;
 uint8_t received_message[32];
@@ -78,7 +77,7 @@ void setup()
   }
 
   Serial.println(F("\n\r- To Send a message:"));
-  Serial.println(F("Type user name, semicolon, then message.\n\reg: 'Alex;Hello Alex.'"));
+  Serial.println(F("Type user name, semicolon, then message.\n\reg: 'Alex;Hello Alex!'"));
   Serial.println(F("------------Begin Chat-------------"));
 }
 /*****************************************************************************************************/
@@ -202,10 +201,7 @@ void messageDecide(RadioHeader &message_header, int to_node_index, int from_node
   {
     if (message_header.message_type == 'B' && message_header.from_address != myAddresses[my_node_index].address) //Broadcast Message, update the connection table
     {
-      if (!c_t[from_node_index].disconnected)
-        updateTable(from_node_index);
-      else
-        Serial.println("currently disconnected from " + myAddresses[from_node_index].userName);
+      updateTable(from_node_index);
     }
   }
 }
@@ -322,41 +318,29 @@ void sendMessage(RadioHeader &sendHeader)
 /********************************************readUserInput()******************************************/
 RadioHeader readUserInput()
 {
-  char prefix[20];
+  char prefix[10];
   int final_node_index = 6, to_node_index = 6;
   RadioHeader returnHeader = {myAddresses[my_node_index].address, myAddresses[my_node_index].address, myAddresses[my_node_index].address, 5, 'q'};
 
-  memset(prefix, 0, 20);
-  Serial.readBytesUntil(';', prefix, 15);
-  String p = String(prefix);
+  memset(prefix, 0, 10);
+  Serial.readBytesUntil(';', prefix, 10);
 
   //Decide what user wants to do and call appropriate functions
-  if (p == "ChangeCH" || p == "ChangePA" || p == "ChangeRT")
+  if (String(prefix) == "ChangeCH" || String(prefix) == "ChangePA" || String(prefix) == "ChangeRT")
   {
     Serial.flush();
     //Carlos put change code here
   }
-  else if (p == "PrintCT") //print connection table
+  else if (String(prefix) == "PrintCT") //print connection table
   {
-    Serial.println(F("You are disconnected to: "));
+    Serial.println(F("You are connected to: "));
     for (int i = 0; i < 6; i++)
     {
-      if(c_t[i].value>0)
+      if( c_t[i].value > 0){
         printf("  %s\n", myAddresses[i].userName.c_str());
+      }
     }
     Serial.flush();
-  }
-  else if (p == "RemoveAbby" || p == "RemoveCarlos" || p == "RemoveKyle" ||
-           p == "RemoveAlex" || p == "RemoveHarman" || p == "RemoveMalik") //disconnect from the person 
-  {
-    Serial.println("Going to disconnectFrom()");
-    disconnectFrom(p);  
-  }
-  else if (p == "ReconnectAbby" || p == "ReconnectCarlos" || p == "ReconnectKyle" ||
-           p == "ReconnectAlex" || p == "ReconnectMalik" || p == "ReconnectHarman")
-  {
-    Serial.println("Going to reconnectTo()");
-    reconnectTo(p);
   }
   else
   {
@@ -429,95 +413,5 @@ int checkConnection(int final_node_index, int from_node_index)
   }
 
   return to_node_index;
-}
-/*****************************************************************************************************/
-
-
-/***********************************disconnectFrom()**************************************************/
-void disconnectFrom(String person) {
-  if (person.length() == 10)
-  {
-    if (person[6] == 'K') // disconnect from kyle
-    {
-      Serial.println("disconnect from kyle");
-      c_t[2].value = 0;
-      c_t[2].disconnected = true; 
-    }
-    else if (person[7] == 'l') //disconnect from alex
-    {
-      Serial.println("disconnect from alex");
-      c_t[3].value = 0;
-      c_t[3].disconnected = true; 
-    }
-    else //disconnect from abby
-    {
-      Serial.println("disconnect from abby");
-      c_t[0].value = 0;
-      c_t[0].disconnected = true; 
-    }
-  }
-  else if (person.length() == 12)
-  {
-    if (person[6] == 'C') // Disconnect from carlos
-    {
-      Serial.println("disconnect from carlos");
-      c_t[1].value = 0;
-      c_t[1].disconnected = true;  
-    }
-    else //disconnect from harman
-    {
-      Serial.println("disconnect from harman");
-      c_t[4].value = 0;
-      c_t[4].disconnected = true;  
-    }
-  }
-  else // disconnect from Malik
-  {
-    Serial.println("disconnect from malik");
-    c_t[5].value = 0;
-    c_t[5].disconnected = true;  
-  }
-}
-/*****************************************************************************************************/
-
-
-/***********************************reconnectTo()****************************************************/
-void reconnectTo(String person) {
-  if (person.length() == 13)
-  {
-    if (person[9] == 'K')       // Disconnect from kyle
-    {
-      Serial.println("reconnect to kyle");
-      c_t[2].disconnected = false; 
-    }
-    else if (person[10] == 'l')  // Disconnect from alex
-    {
-      Serial.println("reconnect to alex");
-      c_t[3].disconnected = false; 
-    }
-    else //disconnect from abby
-    {
-      Serial.println("reconnect to abby");
-      c_t[0].disconnected = false;
-    } 
-  }
-  else if (person.length() == 15)
-  {
-    if (person[9] == 'C') // Disconnect from carlos
-    {
-      Serial.println("reconnect to carlos");
-      c_t[1].disconnected = false;  
-    }
-    else                  // Disconnect from harman
-    {
-      Serial.println("reconnect to harman");
-      c_t[4].disconnected = false;  
-    }
-  }
-  else // Disconnect from Malik
-  {
-    Serial.println("reconnect to malik");
-    c_t[5].disconnected = false;
-  }  
 }
 /*****************************************************************************************************/
