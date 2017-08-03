@@ -10,8 +10,8 @@ void setup() {
 
 void loop() {
 
-  ledAlert("receive");
-  delay(5000);
+  ledAlert("offline");
+  delay(2000);
   
 }
 
@@ -43,15 +43,29 @@ void ledAlert(String mode)
   }
   else if (mode == "offline")
   {
-    for (int i = 0; i <= 3; i++)
+    for (int i = 0; i <= 4; i++)
     {
-      digitalWrite(left, HIGH);
-      digitalWrite(right, HIGH);
-      delay(200);
-      digitalWrite(right, LOW);
-      digitalWrite(left, LOW);
-      delay(200);
+      for (int i = 0; i <= 255; i++)
+      {
+        analogWrite(left, i);
+        analogWrite(right, i);
+        delayMicroseconds(500);
+      }
+      for (int i = 255; i >= 0; i--)
+      {
+        analogWrite(left, i);
+        analogWrite(right, i);
+        delayMicroseconds(500);
+      }
     }
+  }
+  else if (mode == "broadcast")
+  {
+    digitalWrite(left, HIGH);
+    digitalWrite(right, HIGH);
+    delay(100);
+    digitalWrite(left, LOW);
+    digitalWrite(right, LOW);
   }
 }
 
