@@ -14,7 +14,9 @@
 
 RF24 radio(9, 10);
 
-#define my_node_index 2 //Change this to your respective address index 
+#define my_node_index 3 //Change this to your respective address index 
+int left = 5;
+int right = 6;
 
 //Structs
 struct addressBook {
@@ -35,7 +37,7 @@ struct ConnectionTable
   uint8_t value;
   uint8_t updates_til_reset;
   bool disconnected;
-} c_t[6] = {{0, 10, false}, {0, 10, false}, {0, 10, false}, {0, 10, false}, {0, 10, false}, {0, 10, false}};
+} c_t[6] = {{0, 10, false}, {0, 10, false}, {0, 10, false}, {0, 10, true}, {0, 10, true}, {0, 10, true}};
 
 uint8_t channel;
 uint8_t received_message[32];
@@ -58,13 +60,17 @@ void setup()
   randomSeed(analogRead(0));
   radio.setChannel(50);
   radio.setRetries(1,5);
+  radio.setPALevel(RF24_PA_MAX);
   radio.setDataRate(RF24_250KBPS);
   radio.printDetails();
   radio.setAutoAck(false);
 
-  int j=0;
-  for(int i=1; i<6; i++){
-    if(j==my_node_index)
+  pinMode(left, OUTPUT);
+  pinMode(right, OUTPUT);
+
+  int j = 0;
+  for(int i = 1; i < 6; i++){
+    if(j == my_node_index)
       j++;
     radio.openReadingPipe(i, myAddresses[j].address);
     j++;
@@ -96,7 +102,7 @@ void loop()
   RadioHeader sendHeader;
   bool already_broadcast = false;
   unsigned long previousMillis = 0;
-  int random_interval = random(0, 10000);
+  int random_interval = random(0, 5000);
   unsigned long currentMillis = millis();
 
   while (!radio.available()) // Wait for incoming data/message
@@ -113,11 +119,11 @@ void loop()
     }
     else
     {
-      if (currentMillis - previousMillis > 10000)
+      if (currentMillis - previousMillis > 5000)
       {
         already_broadcast = false;
         previousMillis = currentMillis;
-        random_interval = random(0, 10000);
+        random_interval = random(0, 5000);
       }
       if (currentMillis - previousMillis > random_interval && !already_broadcast)
       {
@@ -142,13 +148,15 @@ void receiveMessage()
   receive_header = {received_message[0], received_message[1], received_message[2], received_message[3], received_message[4]};
 
   //Check that we are receiving messages, delete later
-  /*Serial.println("Addresses in receive message");
+  /*
+  Serial.println("Addresses in receive message");
   Serial.print(receive_header.to_address, HEX);
   Serial.print(receive_header.from_address, HEX);
   Serial.print(receive_header.final_address, HEX);
   Serial.print(receive_header.ttl);
   Serial.print(receive_header.message_type);
-  Serial.print("\n");*/
+  Serial.print("\n");
+  */
   
   //Find indicies
   for (int i = 0; i < 6; i++)
@@ -170,16 +178,18 @@ void messageDecide(RadioHeader &message_header, int to_node_index, int from_node
 {
   //Check for garbage first
   if (message_header.message_type != 'M' && message_header.message_type != 'B')
-  {
+  { 
     radio.begin();
     radio.enableDynamicPayloads();
     radio.setChannel(50);
     radio.setRetries(1,5);
     radio.setAutoAck(false);
     radio.setDataRate(RF24_250KBPS);
-    int j=0;
-    for(int i=1; i<6; i++){
-      if(j==my_node_index)
+
+    int j = 0;
+    for(int i = 1; i < 6; i++)
+    {
+      if(j == my_node_index)
         j++;
       radio.openReadingPipe(i, myAddresses[j].address);
       j++;
@@ -197,6 +207,7 @@ void messageDecide(RadioHeader &message_header, int to_node_index, int from_node
         printf("%c", received_message[i]);
       }
       printf("\n");
+      ledAlert("receive");
     }
     else if (message_header.final_address != myAddresses[my_node_index].address && message_header.message_type == 'M') //Message you need to relay
     {
@@ -210,6 +221,9 @@ void messageDecide(RadioHeader &message_header, int to_node_index, int from_node
     {
       if (!c_t[from_node_index].disconnected)
         updateTable(from_node_index);
+      else if (from_node_index == 3 || from_node_index == 2)
+        Serial.println("ignoring broadcast from node: " + from_node_index);
+      
       /*
       else
          int x=5;
@@ -225,6 +239,7 @@ void messageDecide(RadioHeader &message_header, int to_node_index, int from_node
 /*****************************************relayMessage()**********************************************/
 void relayMessage(int final_node_index, int from_node_index)
 {
+  ledAlert("relay");
   int to_node_index = checkConnection(final_node_index, from_node_index);
   received_message[0] = myAddresses[to_node_index].address; // change to_address to your best connection
   received_message[3]--; // decrement ttl
@@ -406,6 +421,8 @@ void broadcastMessage()
   radio.openWritingPipe(myAddresses[my_node_index].address);
   radio.write(&broadcastMessage, sizeof(broadcastMessage)); //Broadcast message to update connections
   radio.startListening();
+
+  ledAlert("broadcast");
 }
 /*****************************************************************************************************/
 
@@ -435,6 +452,7 @@ int checkConnection(int final_node_index, int from_node_index)
     }
     if (to_node_index == 6)
     {
+      ledAlert("offline");
       Serial.println(F("You are not connected to the mesh."));
     }
   }
@@ -530,5 +548,62 @@ void reconnectTo(String person) {
     Serial.println("reconnect to malik");
     c_t[5].disconnected = false;
   }  
+}
+/*****************************************************************************************************/
+
+
+/***********************************ledAlert()********************************************************/
+void ledAlert(String mode) 
+{
+  if (mode == "relay") 
+  {
+    for (int i = 0; i <= 10; i++) 
+    {
+      digitalWrite(left, HIGH);
+      delay(45);
+      digitalWrite(left, LOW);
+      digitalWrite(right, HIGH);
+      delay(45);
+      digitalWrite(right, LOW);
+    }
+  } 
+  else if (mode == "receive")
+  {
+    for (int i = 0; i <= 3; i++) 
+    {
+    digitalWrite(left, HIGH);
+    digitalWrite(right, HIGH);
+    delay(150);
+    digitalWrite(left, LOW);
+    digitalWrite(right, LOW);
+    delay(100);
+    }
+  }
+  else if (mode == "offline")
+  {
+    for (int i = 0; i <= 4; i++)
+    {
+      for (int i = 0; i <= 255; i++)
+      {
+        analogWrite(left, i);
+        analogWrite(right, i);
+        delayMicroseconds(500);
+      }
+      for (int i = 255; i >= 0; i--)
+      {
+        analogWrite(left, i);
+        analogWrite(right, i);
+        delayMicroseconds(500);
+      }
+    }
+  }
+  else if (mode == "broadcast")
+  {
+    digitalWrite(left, HIGH);
+    digitalWrite(right, HIGH);
+    delay(100);
+    digitalWrite(left, LOW);
+    digitalWrite(right, LOW);
+  }
 }
 /*****************************************************************************************************/
