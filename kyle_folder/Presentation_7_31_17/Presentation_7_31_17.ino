@@ -14,13 +14,13 @@
 
 RF24 radio(9, 10);
 
-#define my_node_index 2 //Change this to your respective address index 
+#define my_node_index 1 //Change this to your respective address index 
 
 //Structs
 struct addressBook {
   String userName;
   uint8_t address;
-} myAddresses[6] = {{"Troop", 0xA1}, {"Two", 0xB1}, {"Three", 0xC1}, {"Four", 0xD1}, {"Home", 0xE1}, {"Malik", 0xF1}};
+} myAddresses[6] = {{"Zero", 0xA1}, {"Troop", 0xB1}, {"Two", 0xC1}, {"Three", 0xD1}, {"Four", 0xE1}, {"Home", 0xF1}};
 
 struct RadioHeader {
   uint8_t to_address;
