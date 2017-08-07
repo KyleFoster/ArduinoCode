@@ -4,6 +4,10 @@ int three = 2;
 int left = 5;
 int right = 6;
 
+int interruptPin = 3;
+int light = 8;
+volatile byte state = LOW;
+
 int nite[5] = {one, two, three, left, right};
 
 void setup() {
@@ -14,13 +18,27 @@ void setup() {
   pinMode(left, OUTPUT);
   pinMode(right, OUTPUT);
 
+  pinMode(light, OUTPUT);
+  pinMode(interruptPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), smoke, LOW);
+
 }
 
 void loop() {
 
-  ledAlert("sweep");
-//  delay(1000);
+  digitalWrite(light, state);
+  ledAlert("broadcast");
+  delay(3000);
+  ledAlert("routing");
+  delay(3000);
   
+}
+
+void smoke() 
+{
+  digitalWrite(light, HIGH);
+  delayMicroseconds(500000);
+  digitalWrite(light, LOW);
 }
 
 void ledAlert(String mode) 
@@ -70,20 +88,23 @@ void ledAlert(String mode)
       digitalWrite(three, LOW);
     }
   }
-  else if (mode == "sweep")
+  else if (mode == "routing")
   {
-    for (int i = 0; i <= 4; i++)
+    for (int i = 0; i <= 6; i++)
     {
-      digitalWrite(nite[i], HIGH);
-      delay(20);
-      digitalWrite(nite[i], LOW);
-    }
-    delay(10);
-    for (int i = 4; i >= 0; i--)
-    {
-      digitalWrite(nite[i], HIGH);
-      delay(20);
-      digitalWrite(nite[i], LOW);
+      for (int i = 0; i <= 4; i++)
+      {
+        digitalWrite(nite[i], HIGH);
+        delay(20);
+        digitalWrite(nite[i], LOW);
+      }
+      delay(10);
+      for (int i = 4; i >= 0; i--)
+      {
+        digitalWrite(nite[i], HIGH);
+        delay(20);
+        digitalWrite(nite[i], LOW);
+      }
     }
   }
   else if (mode == "offline")
