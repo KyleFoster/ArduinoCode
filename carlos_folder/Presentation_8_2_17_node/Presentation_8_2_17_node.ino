@@ -14,7 +14,7 @@
 
 RF24 radio(9, 10);
 
-#define my_node_index 1 //Change this to your respective address index 
+#define my_node_index 4 //Change this to your respective address index 
 int left = 5;
 int right = 6;
 
@@ -22,7 +22,7 @@ int right = 6;
 struct addressBook {
   String userName;
   uint8_t address;
-} myAddresses[6] = {{"Abby", 0xA1}, {"Carlos", 0xB1}, {"Kyle", 0xC1}, {"Alex", 0xD1}, {"Harman", 0xE1}, {"Malik", 0xF1}};
+} myAddresses[6] = {{"Troop", 0xA1}, {"One", 0xB1}, {"Two", 0xC1}, {"Three", 0xD1}, {"Home", 0xE1}, {"Malik", 0xF1}};
 
 struct RadioHeader {
   uint8_t to_address;
@@ -547,6 +547,7 @@ void reconnectTo(String person) {
   }  
 }
 /*****************************************************************************************************/
+
 
 /***********************************ledAlert()********************************************************/
 void ledAlert(String mode) 

@@ -17,6 +17,10 @@ RF24 radio(9, 10);
 #define my_node_index 2 //Change this to your respective address index 
 int left = 5;
 int right = 6;
+int one  = 0;
+int two = 1;
+int three = 2;
+int nite[5] = {one, two, three, left, right};
 
 //Structs
 struct addressBook {
@@ -67,6 +71,9 @@ void setup()
 
   pinMode(left, OUTPUT);
   pinMode(right, OUTPUT);
+  pinMode(one, OUTPUT);
+  pinMode(two, OUTPUT);
+  pinMode(three, OUTPUT);
 
   int j = 0;
   for(int i = 1; i < 6; i++){
@@ -557,14 +564,21 @@ void ledAlert(String mode)
 {
   if (mode == "relay") 
   {
-    for (int i = 0; i <= 10; i++) 
+    for (int i = 0; i <= 6; i++) 
     {
-      digitalWrite(left, HIGH);
-      delay(45);
-      digitalWrite(left, LOW);
-      digitalWrite(right, HIGH);
-      delay(45);
-      digitalWrite(right, LOW);
+      for (int i = 0; i <= 4; i++)
+      {
+        digitalWrite(nite[i], HIGH);
+        delay(20); 
+        digitalWrite(nite[i], LOW);
+      }
+      delay(10);
+      for (int i = 4; i >= 0; i--)
+      {
+        digitalWrite(nite[i], HIGH);
+        delay(20); 
+        digitalWrite(nite[i], LOW);
+      }
     }
   } 
   else if (mode == "receive")
