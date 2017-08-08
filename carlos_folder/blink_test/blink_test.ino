@@ -1,20 +1,20 @@
-int one = 0;
-int two = 1;
-int three = 2;
-int left = 5;
-int right = 6;
+int left = 4;
+int red = 5;
+int white = 6;
+int blue = 7;
+int right = 8;
 
 int interruptPin = 3;
 int light = 8;
 volatile byte state = LOW;
 
-int nite[5] = {one, two, three, left, right};
+int nite[5] = {red, white, blue, left, right};
 
 void setup() {
 
-  pinMode(one, OUTPUT);
-  pinMode(two, OUTPUT);
-  pinMode(three, OUTPUT);
+  pinMode(red, OUTPUT);
+  pinMode(white, OUTPUT);
+  pinMode(blue, OUTPUT);
   pinMode(left, OUTPUT);
   pinMode(right, OUTPUT);
 
@@ -26,11 +26,14 @@ void setup() {
 
 void loop() {
 
+//  digitalWrite(light, state);
+//  ledAlert("broadcast");
+//  delay(3000);
+//  ledAlert("routing");
+//  delay(3000);
   digitalWrite(light, state);
-  ledAlert("broadcast");
-  delay(3000);
   ledAlert("routing");
-  delay(3000);
+  delay(1000);
   
 }
 
@@ -71,21 +74,21 @@ void ledAlert(String mode)
   {
     for(int i = 0; i <= 8; i++)
     {
-      digitalWrite(two, HIGH);
+      digitalWrite(white, HIGH);
       delay(25);
-      digitalWrite(two, LOW);
+      digitalWrite(white, LOW);
       digitalWrite(left, HIGH);
       delay(45);
       digitalWrite(left, LOW);
-      digitalWrite(one, HIGH);
+      digitalWrite(red, HIGH);
       delay(25);
-      digitalWrite(one, LOW);
+      digitalWrite(red, LOW);
       digitalWrite(right, HIGH);
       delay(45);
       digitalWrite(right, LOW);
-      digitalWrite(three, HIGH);
+      digitalWrite(blue, HIGH);
       delay(25);
-      digitalWrite(three, LOW);
+      digitalWrite(blue, LOW);
     }
   }
   else if (mode == "routing")
