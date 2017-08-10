@@ -594,7 +594,7 @@ void ledAlert(String mode)
     digitalWrite(red, HIGH);
     digitalWrite(white, HIGH);
     digitalWrite(blue, HIGH); 
-    delay(2000);
+    delay(4000);
     digitalWrite(left, LOW);
     digitalWrite(right, LOW);
     digitalWrite(red, LOW);
