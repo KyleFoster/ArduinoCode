@@ -21,7 +21,7 @@ int initial_x = 0;
 int initial_y = 0;
 int initial_z = 0;
 
-bool useSerial = false; //Set to true to enable Serial Monitoring
+bool useSerial = true; //Set to true to enable Serial Monitoring
 bool blinkState = false;
 
 // MPU control/status vars

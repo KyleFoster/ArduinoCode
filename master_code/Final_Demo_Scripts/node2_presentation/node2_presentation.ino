@@ -22,7 +22,7 @@ int blue = 7;
 int right = 8;
 
 int interruptPin = 3;
-int light = 8;
+//int light = 8;
 volatile byte state = LOW;
 
 int nite[5] = {red, white, blue, left, right};
@@ -80,9 +80,9 @@ void setup()
   pinMode(left, OUTPUT);
   pinMode(right, OUTPUT);
 
-  pinMode(light, OUTPUT);
+  //pinMode(light, OUTPUT);
   pinMode(interruptPin, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(interruptPin), smoke, LOW);
+//  attachInterrupt(digitalPinToInterrupt(interruptPin), smoke, LOW);
   
   int j = 0;
   for(int i = 1; i < 6; i++){
@@ -573,12 +573,12 @@ void reconnectTo(String person) {
 }
 /*****************************************************************************************************/
 
-void smoke() 
-{
-  digitalWrite(light, HIGH);
-  delayMicroseconds(500000);
-  digitalWrite(light, LOW);
-}
+//void smoke() 
+//{
+//  digitalWrite(light, HIGH);
+//  delayMicroseconds(500000);
+//  digitalWrite(light, LOW);
+//}
 
 /***********************************ledAlert()********************************************************/
 void ledAlert(String mode) 
